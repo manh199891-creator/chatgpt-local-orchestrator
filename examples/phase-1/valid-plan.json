@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-20260806-001",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Triển khai các schema PLAN v1 và công cụ validation cho dự án local orchestrator",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-CODEX-001",
+      "agent": "codex",
+      "title": "Triển khai contracts và validation backend",
+      "instructions": "Tạo các Zod schema và logic validate plan trong packages/contracts.",
+      "allowedPaths": [
+        "packages/contracts/**"
+      ],
+      "forbiddenPaths": [
+        "apps/extension/**"
+      ],
+      "dependsOn": []
+    },
+    {
+      "taskId": "TASK-ANTIGRAVITY-001",
+      "agent": "antigravity",
+      "title": "Tạo PLAN mẫu và tài liệu hướng dẫn",
+      "instructions": "Tạo bộ PLAN mẫu, script kiểm tra mẫu và viết tài liệu hướng dẫn trong docs.",
+      "allowedPaths": [
+        "examples/phase-1/**",
+        "scripts/phase-1/**",
+        "docs/plan-v1.md",
+        "docs/plan-validation.md"
+      ],
+      "forbiddenPaths": [
+        "apps/bridge/**"
+      ],
+      "dependsOn": [
+        "TASK-CODEX-001"
+      ]
+    }
+  ],
+  "acceptanceCriteria": [
+    "PLAN v1 schema được validate đúng cấu trúc.",
+    "Tất cả sample invalid bị từ chối với lý do tương ứng."
+  ],
+  "testCommands": [
+    "pnpm --filter @local-orchestrator/contracts test",
+    "node scripts/phase-1/validate-plan-samples.mjs"
+  ],
+  "screenshotsRequired": [
+    {
+      "screenshotId": "SHOT-VALIDATION-SUCCESS",
+      "description": "Màn hình console khi chạy script validate-plan-samples.mjs thành công.",
+      "required": true
+    }
+  ],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

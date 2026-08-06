@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-002",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện lỗi xung đột phạm vi đường dẫn sửa đổi giữa hai agent",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-CODEX-001",
+      "agent": "codex",
+      "title": "Chỉnh sửa mã nguồn thư mục contracts",
+      "instructions": "Thay đổi helper function trong thư mục packages/contracts.",
+      "allowedPaths": [
+        "packages/contracts/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    },
+    {
+      "taskId": "TASK-ANTIGRAVITY-001",
+      "agent": "antigravity",
+      "title": "Chỉnh sửa mã nguồn thư mục src của contracts",
+      "instructions": "Cập nhật type definition trong thư mục packages/contracts/src.",
+      "allowedPaths": [
+        "packages/contracts/src/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống báo lỗi khi hai agent cùng sửa chung phạm vi file."
+  ],
+  "testCommands": [
+    "pnpm test"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

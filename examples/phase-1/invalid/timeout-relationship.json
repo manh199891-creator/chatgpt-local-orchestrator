@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-006",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện lỗi cấu hình giới hạn thời gian chạy job nhỏ hơn timeout của agent",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-001",
+      "agent": "codex",
+      "title": "Chạy task với thời gian dài hơn job",
+      "instructions": "Chạy task có timeout 60 phút trong job timeout 30 phút.",
+      "allowedPaths": [
+        "apps/bridge/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống phát hiện lỗi job timeout nhỏ hơn agent timeout."
+  ],
+  "testCommands": [
+    "pnpm test"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 60,
+    "jobTimeoutMinutes": 30,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

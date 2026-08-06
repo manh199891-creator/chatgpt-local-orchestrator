@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-003",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện phụ thuộc vòng giữa các task trong PLAN",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-001",
+      "agent": "codex",
+      "title": "Task A phụ thuộc Task B",
+      "instructions": "Thực thi công việc A sau khi công việc B hoàn thành.",
+      "allowedPaths": [
+        "apps/bridge/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": [
+        "TASK-002"
+      ]
+    },
+    {
+      "taskId": "TASK-002",
+      "agent": "antigravity",
+      "title": "Task B phụ thuộc Task A",
+      "instructions": "Thực thi công việc B sau khi công việc A hoàn thành.",
+      "allowedPaths": [
+        "apps/extension/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": [
+        "TASK-001"
+      ]
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống phát hiện được chu kỳ phụ thuộc xoay vòng."
+  ],
+  "testCommands": [
+    "pnpm test"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

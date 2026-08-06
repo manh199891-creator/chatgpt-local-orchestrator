@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-004",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện câu lệnh test nguy hiểm hoặc có rủi ro bảo mật",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-001",
+      "agent": "codex",
+      "title": "Chạy câu lệnh kiểm thử nguy hiểm",
+      "instructions": "Chạy lệnh xóa thư mục build trước khi test.",
+      "allowedPaths": [
+        "apps/bridge/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống từ chối PLAN chứa câu lệnh test không an toàn."
+  ],
+  "testCommands": [
+    "rm -rf dist"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

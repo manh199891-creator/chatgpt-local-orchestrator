@@ -1,0 +1,20 @@
+{
+  "duplicate-task-id.json": [
+    "DUPLICATE_TASK_ID"
+  ],
+  "cross-agent-conflict.json": [
+    "CROSS_AGENT_PATH_CONFLICT"
+  ],
+  "cyclic-dependency.json": [
+    "CYCLIC_DEPENDENCY"
+  ],
+  "unsafe-command.json": [
+    "UNSAFE_TEST_COMMAND"
+  ],
+  "path-traversal.json": [
+    "INVALID_PATH_SCOPE"
+  ],
+  "timeout-relationship.json": [
+    "INVALID_LIMIT_RELATIONSHIP"
+  ]
+}

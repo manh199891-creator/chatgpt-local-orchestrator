@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-005",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện lỗi path traversal ngoài thư mục dự án",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-001",
+      "agent": "codex",
+      "title": "Chỉnh sửa file ngoài workspace",
+      "instructions": "Thay đổi file hệ thống bằng đường dẫn tương đối đi ngược lên trên.",
+      "allowedPaths": [
+        "../outside-project/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống từ chối path scope có chứa path traversal."
+  ],
+  "testCommands": [
+    "pnpm test"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}

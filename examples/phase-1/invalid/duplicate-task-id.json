@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "PLAN-INVALID-001",
+  "projectId": "chatgpt-local-orchestrator",
+  "objective": "Kiểm tra phát hiện lỗi trùng lặp Task ID trong danh sách công việc",
+  "baseBranch": "main",
+  "tasks": [
+    {
+      "taskId": "TASK-001",
+      "agent": "codex",
+      "title": "Nâng cấp backend bridge",
+      "instructions": "Triển khai các API endpoint mới trong backend bridge.",
+      "allowedPaths": [
+        "apps/bridge/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    },
+    {
+      "taskId": "TASK-001",
+      "agent": "antigravity",
+      "title": "Cập nhật extension panel",
+      "instructions": "Cập nhật UI extension panel để tích hợp API mới.",
+      "allowedPaths": [
+        "apps/extension/**"
+      ],
+      "forbiddenPaths": [],
+      "dependsOn": []
+    }
+  ],
+  "acceptanceCriteria": [
+    "Hệ thống phát hiện được lỗi trùng lặp Task ID."
+  ],
+  "testCommands": [
+    "pnpm test"
+  ],
+  "screenshotsRequired": [],
+  "limits": {
+    "maxFixRounds": 2,
+    "agentTimeoutMinutes": 45,
+    "jobTimeoutMinutes": 120,
+    "maxChangedFilesPerAgent": 30,
+    "maxCommandsPerAgent": 80
+  }
+}
