@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "phase": "2B",
+  "expectations": {
+    "lifecycle": {
+      "initialState": "DRAFT",
+      "finalState": "COMPLETED",
+      "expectedSequenceLength": 10,
+      "transitions": [
+        { "from": "DRAFT", "to": "AWAITING_APPROVAL" },
+        { "from": "AWAITING_APPROVAL", "to": "QUEUED" },
+        { "from": "QUEUED", "to": "PREPARING" },
+        { "from": "PREPARING", "to": "RUNNING_AGENTS" },
+        { "from": "RUNNING_AGENTS", "to": "INTEGRATING" },
+        { "from": "INTEGRATING", "to": "TESTING" },
+        { "from": "TESTING", "to": "BUILDING_REVIEW_PACKAGE" },
+        { "from": "BUILDING_REVIEW_PACKAGE", "to": "AWAITING_REVIEW" },
+        { "from": "AWAITING_REVIEW", "to": "COMPLETED" }
+      ]
+    },
+    "fixRound": {
+      "defaultMaxFixRounds": 2,
+      "increment1AllowedState": "AWAITING_REVIEW",
+      "increment2AllowedState": "AWAITING_REVIEW",
+      "increment3ExpectedErrorCode": "FIX_ROUND_LIMIT_EXCEEDED",
+      "statePreservedOnError": true,
+      "fixRoundPreservedOnError": true
+    },
+    "guards": {
+      "invalidTransitions": [
+        { "from": "DRAFT", "to": "COMPLETED", "expectedErrorCode": "INVALID_TRANSITION" },
+        { "from": "QUEUED", "to": "QUEUED", "expectedErrorCode": "INVALID_TRANSITION" },
+        { "from": "CANCELLED", "to": "RUNNING_AGENTS", "expectedErrorCode": "INVALID_TRANSITION" }
+      ],
+      "cancellation": {
+        "cancelFromState": "QUEUED",
+        "expectedState": "CANCELLED",
+        "terminalProtection": true
+      }
+    },
+    "persistence": {
+      "reopenPreservesState": true,
+      "reopenPreservesSequence": true,
+      "reopenPreservesEvents": true,
+      "allowsFurtherTransitionsAfterReopen": true
+    },
+    "corruption": {
+      "cases": [
+        { "name": "corrupt_state_json", "expectedErrorCode": "JOB_STATE_CORRUPTED" },
+        { "name": "missing_required_fields", "expectedErrorCode": "INVALID_JOB_RECORD" },
+        { "name": "corrupt_event_jsonl", "expectedErrorCode": "JOB_EVENT_LOG_CORRUPTED" },
+        { "name": "skipped_event_sequence", "expectedErrorCode": "JOB_EVENT_LOG_CORRUPTED" },
+        { "name": "mismatched_job_id", "expectedErrorCode": "JOB_EVENT_LOG_CORRUPTED" },
+        { "name": "mismatched_last_event_sequence", "expectedErrorCode": "JOB_EVENT_LOG_CORRUPTED" }
+      ]
+    },
+    "lock": {
+      "exclusiveLockFile": ".job.lock",
+      "expectedErrorCodeOnConflict": "JOB_LOCKED",
+      "lockReleaseAllowsNextAcquire": true,
+      "exportedPublicApi": false,
+      "indirectVerification": true
+    }
+  }
+}
