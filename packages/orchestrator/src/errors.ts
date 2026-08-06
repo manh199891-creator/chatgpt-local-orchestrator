@@ -1,0 +1,3 @@
+export const JobStoreErrorCode = { JOB_ALREADY_EXISTS:"JOB_ALREADY_EXISTS", JOB_NOT_FOUND:"JOB_NOT_FOUND", INVALID_JOB_RECORD:"INVALID_JOB_RECORD", INVALID_TRANSITION:"INVALID_TRANSITION", JOB_LOCKED:"JOB_LOCKED", JOB_STATE_CORRUPTED:"JOB_STATE_CORRUPTED", JOB_EVENT_LOG_CORRUPTED:"JOB_EVENT_LOG_CORRUPTED", FIX_ROUND_LIMIT_EXCEEDED:"FIX_ROUND_LIMIT_EXCEEDED" } as const;
+export type JobStoreErrorCode = typeof JobStoreErrorCode[keyof typeof JobStoreErrorCode];
+export class JobStoreError extends Error { constructor(public readonly code:JobStoreErrorCode,message:string){super(message);this.name="JobStoreError";} }
