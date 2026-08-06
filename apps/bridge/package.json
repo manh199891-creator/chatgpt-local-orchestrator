@@ -6,10 +6,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts",
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
     "@local-orchestrator/contracts": "workspace:*",
+    "@local-orchestrator/orchestrator": "workspace:*",
     "fastify": "^5.2.1"
   },
   "devDependencies": {

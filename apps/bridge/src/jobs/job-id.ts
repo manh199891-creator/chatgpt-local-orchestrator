@@ -1,0 +1,1 @@
+import {randomUUID} from 'node:crypto'; import {ApiError} from '../errors/api-error.js'; export const generateJobId=()=> 'JOB-'+randomUUID(); export function assertValidJobId(id:string){if(!/^JOB-[A-Za-z0-9-]{1,96}$/.test(id)||id.length>100)throw new ApiError('INVALID_JOB_ID','The job ID is invalid.',400);}

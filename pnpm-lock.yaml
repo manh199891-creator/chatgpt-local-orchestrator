@@ -23,6 +23,9 @@ importers:
       '@local-orchestrator/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@local-orchestrator/orchestrator':
+        specifier: workspace:*
+        version: link:../../packages/orchestrator
       fastify:
         specifier: ^5.2.1
         version: 5.11.2
