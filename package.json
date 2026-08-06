@@ -1,0 +1,16 @@
+{
+  "name": "local-orchestrator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --recursive build",
+    "test": "vitest run --workspace vitest.workspace.ts",
+    "typecheck": "pnpm --recursive typecheck",
+    "dev:bridge": "pnpm --filter @local-orchestrator/bridge dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

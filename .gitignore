@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+runtime/jobs/*
+runtime/logs/*
+orchestrator-worktrees/
+
+!reports/
+!README.md
+!docs/
+!runtime/.gitkeep
