@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Local Orchestrator",
+  "version": "0.1.0",
+  "description": "Browser extension shell for ChatGPT Local Orchestrator local bridge interface.",
+  "permissions": [
+    "sidePanel"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "ChatGPT Local Orchestrator"
+  },
+  "host_permissions": [
+    "http://127.0.0.1:43120/*"
+  ]
+}

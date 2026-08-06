@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Local Orchestrator</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>ChatGPT Local Orchestrator</h1>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <div class="field">
+          <span class="label">Bridge:</span>
+          <span id="bridge-status" class="status-value status-offline">Not connected</span>
+        </div>
+        <div class="field">
+          <span class="label">Project:</span>
+          <span id="project-status" class="status-value">No project selected</span>
+        </div>
+        <div class="field">
+          <span class="label">Plan:</span>
+          <span id="plan-status" class="status-value">No plan detected</span>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="btn-check-bridge" class="btn btn-primary" type="button">Check Bridge</button>
+        <button id="btn-validate-plan" class="btn" type="button" disabled>Validate Plan</button>
+        <button id="btn-approve-run" class="btn btn-accent" type="button" disabled>Approve &amp; Run</button>
+      </section>
+
+      <section class="message-box" id="message-box" hidden>
+        <p id="message-text"></p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="dist/side-panel.js"></script>
+</body>
+</html>
