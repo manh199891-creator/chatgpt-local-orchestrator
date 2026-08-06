@@ -1,0 +1,2 @@
+const forbidden=["rm -rf","remove-item -recurse","del /s","rmdir /s","format","shutdown","git push","git reset --hard","git clean -fd","npm publish","pnpm publish","invoke-webrequest","invoke-restmethod","curl","wget","powershell -command","cmd /c","bash -c"];
+export function isSafeTestCommand(command:string):boolean { if(typeof command!=="string")return false;const v=command.trim(),l=v.toLowerCase();if(!v||v.length>1000||/[\r\n]/.test(v))return false;if(["&&","||",";","|",">","<","`","$("].some(x=>v.includes(x)))return false;return !forbidden.some(x=>l.includes(x)); }
