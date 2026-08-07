@@ -12,6 +12,7 @@
   "dependencies": {
     "@local-orchestrator/contracts": "workspace:*",
     "@local-orchestrator/orchestrator": "workspace:*",
+    "@local-orchestrator/projects": "workspace:*",
     "fastify": "^5.2.1"
   },
   "devDependencies": {

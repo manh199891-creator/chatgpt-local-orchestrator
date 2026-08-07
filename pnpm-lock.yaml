@@ -26,6 +26,9 @@ importers:
       '@local-orchestrator/orchestrator':
         specifier: workspace:*
         version: link:../../packages/orchestrator
+      '@local-orchestrator/projects':
+        specifier: workspace:*
+        version: link:../../packages/projects
       fastify:
         specifier: ^5.2.1
         version: 5.11.2
@@ -53,6 +56,18 @@ importers:
         version: 5.9.3
 
   packages/orchestrator:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.1)
+
+  packages/projects:
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
