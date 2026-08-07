@@ -94,3 +94,77 @@ export interface JobEventsData {
   jobId: string;
   events: JobEvent[];
 }
+
+export interface ProjectCommandDefinition {
+  id: string;
+  executable: string;
+  args: string[];
+  timeoutSeconds: number;
+}
+
+export interface ProjectDefinition {
+  schemaVersion: 1;
+  projectId: string;
+  displayName: string;
+  repositoryPath: string;
+  defaultBranch: string;
+  commands: ProjectCommandDefinition[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ProjectInput = Pick<
+  ProjectDefinition,
+  "projectId" | "displayName" | "repositoryPath" | "defaultBranch" | "commands"
+>;
+
+export interface ProjectIssue {
+  code: string;
+  severity: "error" | "warning";
+  message: string;
+}
+
+export interface ProjectPreflightResult {
+  projectId: string;
+  checkedAt: string;
+  ok: boolean;
+  repository: {
+    configuredPath: string;
+    canonicalPath?: string;
+    exists: boolean;
+    isDirectory: boolean;
+    isGitRepository: boolean;
+  };
+  git: {
+    root?: string;
+    branch?: string;
+    detachedHead: boolean;
+    headCommit?: string;
+    clean: boolean;
+    changedFiles: string[];
+    originUrl?: string;
+  };
+  policy: {
+    defaultBranch: string;
+    branchMatches: boolean;
+    commandsValid: boolean;
+  };
+  issues: ProjectIssue[];
+}
+
+export interface ProjectsListData {
+  projects: ProjectDefinition[];
+}
+
+export interface ProjectSingleData {
+  project: ProjectDefinition;
+}
+
+export interface ProjectDeleteData {
+  deleted: boolean;
+  projectId: string;
+}
+
+export interface ProjectPreflightData {
+  preflight: ProjectPreflightResult;
+}

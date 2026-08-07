@@ -115,3 +115,59 @@ export async function clearCurrentJobId(): Promise<void> {
 
   memoryFallbackMap.delete(CURRENT_JOB_ID_KEY);
 }
+
+const CURRENT_PROJECT_ID_KEY = "current_project_id";
+
+export async function loadCurrentProjectId(): Promise<string | null> {
+  if (isChromeStorageAvailable()) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([CURRENT_PROJECT_ID_KEY], (result) => {
+        const projectId = result[CURRENT_PROJECT_ID_KEY];
+        if (typeof projectId === "string" && projectId.trim()) {
+          resolve(projectId.trim());
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+  const projectId = memoryFallbackMap.get(CURRENT_PROJECT_ID_KEY);
+  return projectId && projectId.trim() ? projectId.trim() : null;
+}
+
+export async function saveCurrentProjectId(projectId: string): Promise<void> {
+  const trimmed = (projectId || "").trim();
+  if (!trimmed) {
+    throw new Error("Project ID cannot be empty.");
+  }
+
+  if (isChromeStorageAvailable()) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set({ [CURRENT_PROJECT_ID_KEY]: trimmed }, () => {
+        if (chrome.runtime?.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  memoryFallbackMap.set(CURRENT_PROJECT_ID_KEY, trimmed);
+}
+
+export async function clearCurrentProjectId(): Promise<void> {
+  if (isChromeStorageAvailable()) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.remove([CURRENT_PROJECT_ID_KEY], () => {
+        if (chrome.runtime?.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  memoryFallbackMap.delete(CURRENT_PROJECT_ID_KEY);
+}

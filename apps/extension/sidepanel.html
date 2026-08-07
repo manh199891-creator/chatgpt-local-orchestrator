@@ -52,6 +52,181 @@
         </div>
       </section>
 
+      <!-- Section: PROJECT REGISTRY -->
+      <section class="card" id="section-project-registry">
+        <h2 class="card-title">PROJECT REGISTRY</h2>
+
+        <div class="field-vertical">
+          <label for="project-selector" class="label">Registered Projects:</label>
+          <select id="project-selector" class="input-select">
+            <option value="">-- No Project Selected --</option>
+          </select>
+        </div>
+
+        <div class="field-vertical">
+          <label for="project-id-input" class="label">Project ID:</label>
+          <input
+            type="text"
+            id="project-id-input"
+            class="input-text"
+            placeholder="e.g. project-001"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-vertical">
+          <label for="project-display-name-input" class="label">Display Name:</label>
+          <input
+            type="text"
+            id="project-display-name-input"
+            class="input-text"
+            placeholder="e.g. My Awesome Project"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-vertical">
+          <label for="project-repo-path-input" class="label">Repository Path:</label>
+          <input
+            type="text"
+            id="project-repo-path-input"
+            class="input-text"
+            placeholder="e.g. E:\chatgpt-local-orchestrator"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-vertical">
+          <label for="project-default-branch-input" class="label">Default Branch:</label>
+          <input
+            type="text"
+            id="project-default-branch-input"
+            class="input-text"
+            placeholder="e.g. main"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-vertical">
+          <label for="project-commands-json-input" class="label">Commands JSON:</label>
+          <textarea
+            id="project-commands-json-input"
+            class="textarea-code"
+            rows="5"
+            placeholder='[\n  {\n    "id": "build",\n    "executable": "pnpm",\n    "args": ["build"],\n    "timeoutSeconds": 600\n  }\n]'
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <span class="label">Created At:</span>
+          <span id="project-created-at" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Updated At:</span>
+          <span id="project-updated-at" class="status-value">-</span>
+        </div>
+
+        <div class="actions-column">
+          <div class="actions-row">
+            <button id="btn-refresh-projects" class="btn" type="button">Refresh Projects</button>
+            <button id="btn-new-project" class="btn" type="button">New Project</button>
+          </div>
+          <div class="actions-row">
+            <button id="btn-save-project" class="btn btn-primary" type="button">Save Project</button>
+            <button id="btn-delete-project" class="btn btn-danger" type="button" disabled>Delete Project</button>
+          </div>
+          <div class="actions-row">
+            <button id="btn-run-preflight" class="btn btn-accent" type="button" disabled>Run Preflight</button>
+            <button id="btn-clear-current-project" class="btn" type="button">Clear Current Project</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Project Preflight -->
+      <section class="card" id="section-project-preflight">
+        <h2 class="card-title">Repository Preflight</h2>
+
+        <div class="field">
+          <span class="label">Overall Status:</span>
+          <span id="preflight-overall" class="status-value badge-state">NOT_RUN</span>
+        </div>
+        <div class="field">
+          <span class="label">Checked At:</span>
+          <span id="preflight-checked-at" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Configured Path:</span>
+          <span id="preflight-configured-path" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Canonical Path:</span>
+          <span id="preflight-canonical-path" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Repo Exists:</span>
+          <span id="preflight-repo-exists" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Is Directory:</span>
+          <span id="preflight-is-directory" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Is Git Repo:</span>
+          <span id="preflight-is-git-repo" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Git Root:</span>
+          <span id="preflight-git-root" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Branch:</span>
+          <span id="preflight-branch" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Default Branch:</span>
+          <span id="preflight-default-branch" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Branch Matches:</span>
+          <span id="preflight-branch-matches" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Detached HEAD:</span>
+          <span id="preflight-detached-head" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">HEAD Commit:</span>
+          <span id="preflight-head-commit" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Working Tree Clean:</span>
+          <span id="preflight-working-tree-clean" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Origin URL:</span>
+          <span id="preflight-origin-url" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Commands Valid:</span>
+          <span id="preflight-commands-valid" class="status-value">-</span>
+        </div>
+
+        <div class="field-vertical">
+          <span class="label">Changed Files:</span>
+          <div id="preflight-changed-files" class="changed-files-box">
+            <p class="text-muted">No changed files.</p>
+          </div>
+        </div>
+
+        <div class="field-vertical">
+          <span class="label">Preflight Issues:</span>
+          <div id="preflight-issues-list" class="issues-box">
+            <p class="text-muted">No preflight issues.</p>
+          </div>
+        </div>
+      </section>
+
+
       <!-- Section B: PLAN Input -->
       <section class="card" id="section-plan-input">
         <h2 class="card-title">PLAN Input</h2>

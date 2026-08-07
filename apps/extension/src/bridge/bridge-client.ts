@@ -6,6 +6,13 @@ import {
   JobEventsData,
   ApiResponse,
   ApiSuccessResponse,
+  ProjectDefinition,
+  ProjectInput,
+  ProjectPreflightResult,
+  ProjectsListData,
+  ProjectSingleData,
+  ProjectDeleteData,
+  ProjectPreflightData,
 } from "./bridge-types.js";
 import { BridgeError } from "./bridge-errors.js";
 
@@ -123,10 +130,70 @@ export class BridgeClient {
     });
   }
 
+  async listProjects(token: string): Promise<ProjectDefinition[]> {
+    const res = await this.request<ProjectsListData>("/api/projects", {
+      method: "GET",
+      token,
+    });
+    return res.projects;
+  }
+
+  async createProject(input: ProjectInput, token: string): Promise<ProjectDefinition> {
+    const res = await this.request<ProjectSingleData>("/api/projects", {
+      method: "POST",
+      token,
+      body: input,
+    });
+    return res.project;
+  }
+
+  async getProject(projectId: string, token: string): Promise<ProjectDefinition> {
+    const sanitizedId = encodeURIComponent(projectId);
+    const res = await this.request<ProjectSingleData>(`/api/projects/${sanitizedId}`, {
+      method: "GET",
+      token,
+    });
+    return res.project;
+  }
+
+  async updateProject(
+    projectId: string,
+    input: Omit<ProjectInput, "projectId">,
+    token: string
+  ): Promise<ProjectDefinition> {
+    const sanitizedId = encodeURIComponent(projectId);
+    const res = await this.request<ProjectSingleData>(`/api/projects/${sanitizedId}`, {
+      method: "PUT",
+      token,
+      body: input,
+    });
+    return res.project;
+  }
+
+  async deleteProject(
+    projectId: string,
+    token: string
+  ): Promise<{ deleted: boolean; projectId: string }> {
+    const sanitizedId = encodeURIComponent(projectId);
+    return this.request<ProjectDeleteData>(`/api/projects/${sanitizedId}`, {
+      method: "DELETE",
+      token,
+    });
+  }
+
+  async runProjectPreflight(projectId: string, token: string): Promise<ProjectPreflightResult> {
+    const sanitizedId = encodeURIComponent(projectId);
+    const res = await this.request<ProjectPreflightData>(`/api/projects/${sanitizedId}/preflight`, {
+      method: "POST",
+      token,
+    });
+    return res.preflight;
+  }
+
   private async request<T>(
     path: string,
     options: {
-      method: "GET" | "POST";
+      method: "GET" | "POST" | "PUT" | "DELETE";
       token?: string;
       body?: unknown;
       requireAuth?: boolean;

@@ -14,9 +14,13 @@ export class BridgeError extends Error {
 
 export function formatBridgeError(error: unknown): { code: string; message: string; details?: Record<string, unknown> } {
   if (error instanceof BridgeError) {
+    let msg = sanitizeErrorMessage(error.message);
+    if (error.code === "PROJECT_ROOTS_NOT_CONFIGURED") {
+      msg = "Bridge chưa được cấu hình BRIDGE_ALLOWED_PROJECT_ROOTS.";
+    }
     return {
       code: error.code,
-      message: sanitizeErrorMessage(error.message),
+      message: msg,
       details: error.details,
     };
   }

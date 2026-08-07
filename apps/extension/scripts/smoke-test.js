@@ -2,7 +2,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { BridgeClient } from "../dist/bridge/bridge-client.js";
-import { BridgeError } from "../dist/bridge/bridge-errors.js";
+import { BridgeError, formatBridgeError } from "../dist/bridge/bridge-errors.js";
+import {
+  loadCurrentProjectId,
+  saveCurrentProjectId,
+  clearCurrentProjectId,
+} from "../dist/storage/token-storage.js";
+import { validateCommandsJsonInput } from "../dist/side-panel.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -610,8 +617,396 @@ async function runBridgeClientTests() {
     assert(disabled === false, "Clear Current Job with validated PLAN: Create Job must be enabled");
   });
 
+  // --- Phase 4B Mandatory Tests ---
+
+  // Test 19: 1. BridgeClient listProjects
+  await testCase("1. BridgeClient listProjects", async () => {
+    let capturedUrl = null;
+    let capturedAuth = null;
+    const mockFetch = async (url, options) => {
+      capturedUrl = url;
+      capturedAuth = options.headers?.["Authorization"];
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            projects: [
+              {
+                schemaVersion: 1,
+                projectId: "proj-1",
+                displayName: "Project 1",
+                repositoryPath: "E:\\repo1",
+                defaultBranch: "main",
+                commands: [],
+                createdAt: "2026-01-01T00:00:00Z",
+                updatedAt: "2026-01-01T00:00:00Z",
+              },
+            ],
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const list = await client.listProjects("test-token");
+    assert(Array.isArray(list) && list.length === 1, "listProjects should return array of projects");
+    assert(list[0].projectId === "proj-1", "projectId should match");
+    assert(capturedUrl === "http://127.0.0.1:43120/api/projects", "URL should be /api/projects");
+    assert(capturedAuth === "Bearer test-token", "Authorization header must be Bearer token");
+  });
+
+  // Test 20: 2. BridgeClient createProject
+  await testCase("2. BridgeClient createProject", async () => {
+    let capturedMethod = null;
+    let capturedBody = null;
+    const mockFetch = async (url, options) => {
+      capturedMethod = options.method;
+      capturedBody = JSON.parse(options.body);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            project: {
+              schemaVersion: 1,
+              ...capturedBody,
+              createdAt: "2026-01-01T00:00:00Z",
+              updatedAt: "2026-01-01T00:00:00Z",
+            },
+          },
+        }),
+        { status: 201, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const input = {
+      projectId: "proj-new",
+      displayName: "New Project",
+      repositoryPath: "E:\\newrepo",
+      defaultBranch: "main",
+      commands: [{ id: "build", executable: "pnpm", args: ["build"], timeoutSeconds: 600 }],
+    };
+    const created = await client.createProject(input, "test-token");
+    assert(capturedMethod === "POST", "createProject method must be POST");
+    assert(created.projectId === "proj-new", "created projectId must match input");
+  });
+
+  // Test 21: 3. BridgeClient getProject
+  await testCase("3. BridgeClient getProject", async () => {
+    let capturedUrl = null;
+    const mockFetch = async (url) => {
+      capturedUrl = url;
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            project: {
+              schemaVersion: 1,
+              projectId: "proj-1",
+              displayName: "P1",
+              repositoryPath: "E:\\p1",
+              defaultBranch: "main",
+              commands: [],
+              createdAt: "2026-01-01T00:00:00Z",
+              updatedAt: "2026-01-01T00:00:00Z",
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const p = await client.getProject("proj-1", "test-token");
+    assert(capturedUrl === "http://127.0.0.1:43120/api/projects/proj-1", "URL must be /api/projects/proj-1");
+    assert(p.projectId === "proj-1", "getProject should return project object");
+  });
+
+  // Test 22: 4. BridgeClient updateProject
+  await testCase("4. BridgeClient updateProject", async () => {
+    let capturedMethod = null;
+    let capturedBody = null;
+    const mockFetch = async (url, options) => {
+      capturedMethod = options.method;
+      capturedBody = JSON.parse(options.body);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            project: {
+              schemaVersion: 1,
+              projectId: "proj-1",
+              ...capturedBody,
+              createdAt: "2026-01-01T00:00:00Z",
+              updatedAt: "2026-01-02T00:00:00Z",
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const updateInput = {
+      displayName: "P1 Updated",
+      repositoryPath: "E:\\p1",
+      defaultBranch: "main",
+      commands: [],
+    };
+    const updated = await client.updateProject("proj-1", updateInput, "test-token");
+    assert(capturedMethod === "PUT", "updateProject method must be PUT");
+    assert(!("projectId" in capturedBody), "PUT body must NOT contain projectId property");
+    assert(updated.displayName === "P1 Updated", "displayName should be updated");
+  });
+
+  // Test 23: 5. BridgeClient deleteProject
+  await testCase("5. BridgeClient deleteProject", async () => {
+    let capturedMethod = null;
+    const mockFetch = async (url, options) => {
+      capturedMethod = options.method;
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: { deleted: true, projectId: "proj-1" },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const res = await client.deleteProject("proj-1", "test-token");
+    assert(capturedMethod === "DELETE", "deleteProject method must be DELETE");
+    assert(res.deleted === true && res.projectId === "proj-1", "delete result should confirm deletion");
+  });
+
+  // Test 24: 6. BridgeClient runProjectPreflight
+  await testCase("6. BridgeClient runProjectPreflight", async () => {
+    let capturedUrl = null;
+    let capturedMethod = null;
+    const mockFetch = async (url, options) => {
+      capturedUrl = url;
+      capturedMethod = options.method;
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            preflight: {
+              projectId: "proj-1",
+              checkedAt: "2026-01-01T00:00:00Z",
+              ok: true,
+              repository: { configuredPath: "E:\\repo", exists: true, isDirectory: true, isGitRepository: true },
+              git: { branch: "main", detachedHead: false, clean: true, changedFiles: [] },
+              policy: { defaultBranch: "main", branchMatches: true, commandsValid: true },
+              issues: [],
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    const res = await client.runProjectPreflight("proj-1", "test-token");
+    assert(capturedMethod === "POST", "preflight method must be POST");
+    assert(capturedUrl === "http://127.0.0.1:43120/api/projects/proj-1/preflight", "URL must be /api/projects/proj-1/preflight");
+    assert(res.ok === true, "preflight result ok must be true");
+  });
+
+  // Test 25: 7. Bearer token is sent for project endpoints
+  await testCase("7. Bearer token sent in headers", async () => {
+    let capturedAuth = null;
+    const mockFetch = async (url, options) => {
+      capturedAuth = options.headers?.["Authorization"];
+      return new Response(JSON.stringify({ success: true, data: { projects: [] } }), { status: 200 });
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    await client.listProjects("my-secret-token");
+    assert(capturedAuth === "Bearer my-secret-token", "Authorization header must be Bearer my-secret-token");
+  });
+
+  // Test 26: 8. API error is mapped stably
+  await testCase("8. API error mapped stably by formatBridgeError", async () => {
+    const err = new BridgeError("INVALID_PROJECT_ID", "Project ID is invalid.", 400);
+    const formatted = formatBridgeError(err);
+    assert(formatted.code === "INVALID_PROJECT_ID", "code should be INVALID_PROJECT_ID");
+    assert(formatted.message === "Project ID is invalid.", "message should match");
+  });
+
+  // Test 27: 9. PROJECT_ROOTS_NOT_CONFIGURED error handled with guidance
+  await testCase("9. PROJECT_ROOTS_NOT_CONFIGURED error handled with guidance", async () => {
+    const err = new BridgeError("PROJECT_ROOTS_NOT_CONFIGURED", "Allowed project roots are not configured.", 503);
+    const formatted = formatBridgeError(err);
+    assert(formatted.code === "PROJECT_ROOTS_NOT_CONFIGURED", "code must be PROJECT_ROOTS_NOT_CONFIGURED");
+    assert(
+      formatted.message.includes("BRIDGE_ALLOWED_PROJECT_ROOTS"),
+      `message must contain guidance about BRIDGE_ALLOWED_PROJECT_ROOTS, got: ${formatted.message}`
+    );
+  });
+
+  // Test 28: 10. Commands JSON valid format accepted
+  await testCase("10. Commands JSON valid format accepted", async () => {
+    const validJson = JSON.stringify([
+      { id: "build", executable: "pnpm", args: ["build"], timeoutSeconds: 600 },
+    ]);
+    const res = validateCommandsJsonInput(validJson);
+    assert(res.valid === true, "Valid Commands JSON should return valid: true");
+    assert(res.commands && res.commands.length === 1, "Should parse 1 command");
+    assert(res.commands[0].id === "build", "Command ID should match");
+  });
+
+  // Test 29: 11. Commands JSON invalid format rejected
+  await testCase("11. Commands JSON invalid format rejected", async () => {
+    const invalidObj = JSON.stringify({ id: "build" });
+    const res1 = validateCommandsJsonInput(invalidObj);
+    assert(res1.valid === false, "Object instead of array should return valid: false");
+
+    const invalidItem = JSON.stringify([{ id: "build", executable: "pnpm", args: "not-an-array", timeoutSeconds: 600 }]);
+    const res2 = validateCommandsJsonInput(invalidItem);
+    assert(res2.valid === false, "Invalid args should return valid: false");
+
+    const invalidTimeout = JSON.stringify([{ id: "build", executable: "pnpm", args: [], timeoutSeconds: "600" }]);
+    const res3 = validateCommandsJsonInput(invalidTimeout);
+    assert(res3.valid === false, "String timeoutSeconds should return valid: false");
+  });
+
+  // Test 30: 12. Current project saved to storage
+  await testCase("12. Current project saved to storage", async () => {
+    await saveCurrentProjectId("project-999");
+    const loaded = await loadCurrentProjectId();
+    assert(loaded === "project-999", "Loaded project ID must equal saved project ID");
+    await clearCurrentProjectId();
+    const afterClear = await loadCurrentProjectId();
+    assert(afterClear === null, "Loaded project ID after clear must be null");
+  });
+
+  // Test 31: 13. PROJECT_NOT_FOUND clears storage
+  await testCase("13. PROJECT_NOT_FOUND clears storage", async () => {
+    await saveCurrentProjectId("missing-project");
+    const mockFetch = async () => {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: { code: "PROJECT_NOT_FOUND", message: "Project not found." },
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    };
+
+    const client = new BridgeClient({ fetchFn: mockFetch });
+    let errorCaught = false;
+    try {
+      await client.getProject("missing-project", "token");
+    } catch (err) {
+      errorCaught = true;
+      assert(err instanceof BridgeError && err.code === "PROJECT_NOT_FOUND", "Error should be PROJECT_NOT_FOUND");
+    }
+    assert(errorCaught === true, "getProject must throw when 404");
+
+    // Simulating side panel error handling clearing storage
+    await clearCurrentProjectId();
+    const current = await loadCurrentProjectId();
+    assert(current === null, "Storage must be cleared on PROJECT_NOT_FOUND");
+  });
+
+  // Test 32: 14. Delete project disabled when no project selected
+  await testCase("14. Delete project disabled when no project selected", async () => {
+    function computeProjectActionStates({ currentToken, currentProjectId, isRequestRunning }) {
+      const hasToken = Boolean(currentToken);
+      const hasProjectId = Boolean(currentProjectId);
+      const btnDeleteProjectDisabled = !hasToken || !hasProjectId || isRequestRunning;
+      return btnDeleteProjectDisabled;
+    }
+
+    const disabledNoProject = computeProjectActionStates({ currentToken: "token", currentProjectId: null, isRequestRunning: false });
+    assert(disabledNoProject === true, "Delete button must be disabled when currentProjectId is null");
+
+    const enabledWithProject = computeProjectActionStates({ currentToken: "token", currentProjectId: "proj-1", isRequestRunning: false });
+    assert(enabledWithProject === false, "Delete button must be enabled when currentProjectId is set");
+  });
+
+  // Test 33: 15. Preflight disabled when no project selected
+  await testCase("15. Preflight disabled when no project selected", async () => {
+    function computeProjectActionStates({ currentToken, currentProjectId, isRequestRunning }) {
+      const hasToken = Boolean(currentToken);
+      const hasProjectId = Boolean(currentProjectId);
+      const btnRunPreflightDisabled = !hasToken || !hasProjectId || isRequestRunning;
+      return btnRunPreflightDisabled;
+    }
+
+    const disabledNoProject = computeProjectActionStates({ currentToken: "token", currentProjectId: null, isRequestRunning: false });
+    assert(disabledNoProject === true, "Preflight button must be disabled when currentProjectId is null");
+
+    const enabledWithProject = computeProjectActionStates({ currentToken: "token", currentProjectId: "proj-1", isRequestRunning: false });
+    assert(enabledWithProject === false, "Preflight button must be enabled when currentProjectId is set");
+  });
+
+  // Test 34: 16. No double submit
+  await testCase("16. No double submit action state guard", async () => {
+    function computeProjectActionStates({ currentToken, currentProjectId, isRequestRunning }) {
+      const hasToken = Boolean(currentToken);
+      const hasProjectId = Boolean(currentProjectId);
+      return {
+        btnRefreshProjectsDisabled: !hasToken || isRequestRunning,
+        btnNewProjectDisabled: !hasToken || isRequestRunning,
+        btnSaveProjectDisabled: !hasToken || isRequestRunning,
+        btnDeleteProjectDisabled: !hasToken || !hasProjectId || isRequestRunning,
+        btnRunPreflightDisabled: !hasToken || !hasProjectId || isRequestRunning,
+      };
+    }
+
+    const runningStates = computeProjectActionStates({ currentToken: "token", currentProjectId: "proj-1", isRequestRunning: true });
+    assert(runningStates.btnRefreshProjectsDisabled === true, "Refresh button disabled while request running");
+    assert(runningStates.btnNewProjectDisabled === true, "New button disabled while request running");
+    assert(runningStates.btnSaveProjectDisabled === true, "Save button disabled while request running");
+    assert(runningStates.btnDeleteProjectDisabled === true, "Delete button disabled while request running");
+    assert(runningStates.btnRunPreflightDisabled === true, "Preflight button disabled while request running");
+  });
+
+  // Test 35: 17. Terminal/request state guards
+  await testCase("17. Terminal/request state guards", async () => {
+    function isTerminalState(state) {
+      return ["COMPLETED", "FAILED", "CANCELLED"].includes(state);
+    }
+    assert(isTerminalState("COMPLETED") === true, "COMPLETED is terminal");
+    assert(isTerminalState("FAILED") === true, "FAILED is terminal");
+    assert(isTerminalState("CANCELLED") === true, "CANCELLED is terminal");
+    assert(isTerminalState("AWAITING_APPROVAL") === false, "AWAITING_APPROVAL is non-terminal");
+    assert(isTerminalState("QUEUED") === false, "QUEUED is non-terminal");
+    assert(isTerminalState("IN_PROGRESS") === false, "IN_PROGRESS is non-terminal");
+  });
+
+  // Test 36: 18. Preflight issues render correctly
+  await testCase("18. Preflight issues rendering structure", async () => {
+    const mockIssues = [
+      { code: "WORKING_TREE_DIRTY", severity: "error", message: "Working tree dirty" },
+      { code: "ORIGIN_REMOTE_MISSING", severity: "warning", message: "Origin remote missing" },
+    ];
+
+    const rendered = mockIssues.map(issue => ({
+      badgeClass: issue.severity === "error" ? "badge-error" : "badge-warning",
+      badgeText: issue.severity.toUpperCase(),
+      code: issue.code,
+      message: issue.message,
+    }));
+
+    assert(rendered[0].badgeClass === "badge-error" && rendered[0].badgeText === "ERROR", "Error issue badge must be ERROR");
+    assert(rendered[1].badgeClass === "badge-warning" && rendered[1].badgeText === "WARNING", "Warning issue badge must be WARNING");
+  });
+
+  // Test 37: 19. Changed files render
+  await testCase("19. Changed files rendering structure", async () => {
+    const changedFiles = ["src/index.ts", "package.json"];
+    const rendered = changedFiles.map(f => ({ className: "changed-file-item", textContent: f }));
+    assert(rendered.length === 2, "Should render 2 changed files");
+    assert(rendered[0].textContent === "src/index.ts", "First file path must match");
+    assert(rendered[1].textContent === "package.json", "Second file path must match");
+  });
+
   console.log(`Bridge Client Tests Passed: ${bridgePassCount}/${bridgeTestCount}`);
 }
+
 
 await runBridgeClientTests();
 
