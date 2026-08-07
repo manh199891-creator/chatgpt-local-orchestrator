@@ -13,28 +13,126 @@
     </header>
 
     <main class="content">
-      <section class="card">
+      <!-- Section A: Bridge Connection -->
+      <section class="card" id="section-bridge-connection">
+        <h2 class="card-title">Bridge Connection</h2>
+        
         <div class="field">
-          <span class="label">Bridge:</span>
+          <span class="label">Bridge Status:</span>
           <span id="bridge-status" class="status-value status-offline">Not connected</span>
         </div>
         <div class="field">
-          <span class="label">Project:</span>
-          <span id="project-status" class="status-value">No project selected</span>
+          <span class="label">Bridge Version:</span>
+          <span id="bridge-version" class="status-value">Unknown</span>
         </div>
         <div class="field">
-          <span class="label">Plan:</span>
-          <span id="plan-status" class="status-value">No plan detected</span>
+          <span class="label">Base URL:</span>
+          <span id="bridge-base-url" class="status-value">http://127.0.0.1:43120</span>
+        </div>
+        <div class="field">
+          <span class="label">Token Status:</span>
+          <span id="token-status" class="status-value status-offline">Not set</span>
+        </div>
+
+        <div class="field-vertical">
+          <label for="token-input" class="label">Local Bearer Token:</label>
+          <input
+            type="password"
+            id="token-input"
+            class="input-text"
+            placeholder="Enter token (e.g. from runtime/bridge-token.txt)"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="actions-row">
+          <button id="btn-check-bridge" class="btn btn-primary" type="button">Check Bridge</button>
+          <button id="btn-save-token" class="btn" type="button">Save Token</button>
+          <button id="btn-clear-token" class="btn btn-danger" type="button">Clear Token</button>
         </div>
       </section>
 
-      <section class="actions">
-        <button id="btn-check-bridge" class="btn btn-primary" type="button">Check Bridge</button>
-        <button id="btn-validate-plan" class="btn" type="button" disabled>Validate Plan</button>
-        <button id="btn-approve-run" class="btn btn-accent" type="button" disabled>Approve &amp; Run</button>
+      <!-- Section B: PLAN Input -->
+      <section class="card" id="section-plan-input">
+        <h2 class="card-title">PLAN Input</h2>
+        
+        <div class="field-vertical">
+          <label for="plan-json-input" class="label">PLAN JSON:</label>
+          <textarea
+            id="plan-json-input"
+            class="textarea-code"
+            rows="8"
+            placeholder="Paste PLAN JSON here..."
+          ></textarea>
+        </div>
+
+        <div class="actions-row">
+          <button id="btn-validate-plan" class="btn btn-primary" type="button">Validate Plan</button>
+          <button id="btn-create-job" class="btn btn-accent" type="button" disabled>Create Job</button>
+          <button id="btn-clear-plan" class="btn" type="button">Clear Plan</button>
+        </div>
+
+        <div id="plan-validation-output" class="info-box hidden"></div>
       </section>
 
-      <section class="message-box" id="message-box" hidden>
+      <!-- Section C: Current Job -->
+      <section class="card" id="section-current-job">
+        <h2 class="card-title">Current Job</h2>
+
+        <div class="field">
+          <span class="label">Job ID:</span>
+          <span id="job-id" class="status-value">None</span>
+        </div>
+        <div class="field">
+          <span class="label">Plan ID:</span>
+          <span id="job-plan-id" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Project ID:</span>
+          <span id="job-project-id" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">State:</span>
+          <span id="job-state" class="status-value badge-state">NONE</span>
+        </div>
+        <div class="field">
+          <span class="label">Fix Round:</span>
+          <span id="job-fix-round" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Max Fix Rounds:</span>
+          <span id="job-max-fix-rounds" class="status-value">-</span>
+        </div>
+        <div class="field">
+          <span class="label">Updated At:</span>
+          <span id="job-updated-at" class="status-value">-</span>
+        </div>
+
+        <div class="actions-column">
+          <div class="actions-row">
+            <button id="btn-refresh-job" class="btn" type="button" disabled>Refresh Job</button>
+            <button id="btn-approve-job" class="btn btn-accent" type="button" disabled>Approve Job</button>
+          </div>
+          <div class="actions-row">
+            <button id="btn-cancel-job" class="btn btn-danger" type="button" disabled>Cancel Job</button>
+            <button id="btn-load-events" class="btn" type="button" disabled>Load Events</button>
+          </div>
+          <div class="actions-row">
+            <button id="btn-clear-job" class="btn" type="button" disabled>Clear Current Job</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section D: Event Log -->
+      <section class="card" id="section-event-log">
+        <h2 class="card-title">Event Log</h2>
+        <div id="event-log-container" class="event-log-box">
+          <p class="text-muted">No events loaded.</p>
+        </div>
+      </section>
+
+      <!-- Message / Status Box -->
+      <section id="message-box" class="message-box hidden">
         <p id="message-text"></p>
       </section>
     </main>
