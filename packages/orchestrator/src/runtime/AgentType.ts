@@ -1,0 +1,1 @@
+export enum AgentType { CODEX="CODEX", ANTIGRAVITY="ANTIGRAVITY" }

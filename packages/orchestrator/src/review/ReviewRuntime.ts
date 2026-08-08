@@ -1,0 +1,6 @@
+import {compareIssues,validateReviewEvidence} from "./ReviewEvidenceValidator.js";
+import {defaultReviewRules} from "./ReviewRules.js";
+import {ReviewStatus,type ReviewEvidence,type ReviewResult,type ReviewRule} from "./ReviewTypes.js";
+
+export class ReviewRuntime {private readonly rules:readonly ReviewRule[];constructor(rules:readonly ReviewRule[]=defaultReviewRules){this.rules=[...rules].sort((left,right)=>left.id.localeCompare(right.id));}
+ review(evidence:ReviewEvidence):ReviewResult{const validationIssues=validateReviewEvidence(evidence);const issues=validationIssues.length?validationIssues:this.rules.flatMap(rule=>rule.evaluate(evidence)).sort(compareIssues);const repairableIssueCount=issues.filter(issue=>issue.repairable).length,nonRepairableIssueCount=issues.length-repairableIssueCount;return {status:nonRepairableIssueCount?ReviewStatus.FAIL:repairableIssueCount?ReviewStatus.NEEDS_REPAIR:ReviewStatus.PASS,jobId:typeof evidence?.jobId==="string"?evidence.jobId:"",...(typeof evidence?.taskId==="string"?{taskId:evidence.taskId}:{}),agentType:evidence?.agentType,issues,summary:{ruleIds:this.rules.map(rule=>rule.id),issueCount:issues.length,repairableIssueCount,nonRepairableIssueCount}};}}

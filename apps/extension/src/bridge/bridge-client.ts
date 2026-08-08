@@ -3,6 +3,7 @@ import {
   BridgeVersionData,
   ValidationResultData,
   JobDetailsData,
+  JobApproveData,
   JobEventsData,
   ApiResponse,
   ApiSuccessResponse,
@@ -13,6 +14,9 @@ import {
   ProjectSingleData,
   ProjectDeleteData,
   ProjectPreflightData,
+  PrepareJobData,
+  RemoveWorktreeData,
+  StartJobData,
 } from "./bridge-types.js";
 import { BridgeError } from "./bridge-errors.js";
 
@@ -103,10 +107,10 @@ export class BridgeClient {
     });
   }
 
-  async approveJob(jobId: string, reason: string | undefined, token: string): Promise<JobDetailsData> {
+  async approveJob(jobId: string, reason: string | undefined, token: string): Promise<JobApproveData> {
     const sanitizedId = encodeURIComponent(jobId);
     const body = reason !== undefined ? { reason } : {};
-    return this.request<JobDetailsData>(`/api/jobs/${sanitizedId}/approve`, {
+    return this.request<JobApproveData>(`/api/jobs/${sanitizedId}/approve`, {
       method: "POST",
       token,
       body,
@@ -126,6 +130,30 @@ export class BridgeClient {
     const sanitizedId = encodeURIComponent(jobId);
     return this.request<JobEventsData>(`/api/jobs/${sanitizedId}/events`, {
       method: "GET",
+      token,
+    });
+  }
+
+  async prepareJob(jobId: string, token: string): Promise<PrepareJobData> {
+    const sanitizedId = encodeURIComponent(jobId);
+    return this.request<PrepareJobData>(`/api/jobs/${sanitizedId}/prepare`, {
+      method: "POST",
+      token,
+    });
+  }
+
+  async removeWorktree(jobId: string, token: string): Promise<RemoveWorktreeData> {
+    const sanitizedId = encodeURIComponent(jobId);
+    return this.request<RemoveWorktreeData>(`/api/jobs/${sanitizedId}/worktree/remove`, {
+      method: "POST",
+      token,
+    });
+  }
+
+  async startJob(jobId: string, token: string): Promise<StartJobData> {
+    const sanitizedId = encodeURIComponent(jobId);
+    return this.request<StartJobData>(`/api/jobs/${sanitizedId}/start`, {
+      method: "POST",
       token,
     });
   }

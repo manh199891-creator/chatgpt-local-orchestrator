@@ -60,6 +60,71 @@ export interface ValidationResultData {
   plan: Plan;
 }
 
+export interface JobProjectCommand {
+  id: string;
+  executable: string;
+  args: string[];
+  timeoutSeconds: number;
+}
+
+export interface JobProjectVerification {
+  verifiedAt: string;
+  configuredPath: string;
+  canonicalPath: string;
+  gitRoot: string;
+  branch: string;
+  headCommit: string;
+  clean: true;
+  commandsValid: true;
+  originUrl?: string;
+}
+
+export interface JobProjectBinding {
+  schemaVersion: 1;
+  projectId: string;
+  displayName: string;
+  repositoryPath: string;
+  defaultBranch: string;
+  commands: JobProjectCommand[];
+  projectCreatedAt: string;
+  projectUpdatedAt: string;
+  boundAt: string;
+  verification?: JobProjectVerification;
+}
+
+export type WorktreeStatus = "NOT_PREPARED" | "PREPARING" | "READY" | "FAILED";
+
+export interface JobWorktreeError {
+  code: string;
+  message: string;
+}
+
+export interface JobWorktree {
+  status: WorktreeStatus;
+  worktreePath?: string;
+  branchName?: string;
+  createdAt?: string;
+  error?: JobWorktreeError;
+}
+
+export type ExecutionStatus = "NOT_STARTED" | "STARTING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+
+export interface JobExecutionError {
+  code: string;
+  message: string;
+}
+
+export interface JobExecution {
+  status: ExecutionStatus;
+  startedAt?: string;
+  finishedAt?: string;
+  durationMs?: number;
+  exitCode?: number;
+  currentAgent?: string;
+  logPath?: string;
+  error?: JobExecutionError;
+}
+
 export interface JobRecord {
   jobId: string;
   planId: string;
@@ -74,12 +139,68 @@ export interface JobRecord {
   cancelledAt?: string;
   cancellationReason?: string;
   failureReason?: string;
+  projectBinding?: JobProjectBinding;
+  worktree?: JobWorktree;
+  execution?: JobExecution;
 }
 
 export interface JobDetailsData {
   job: JobRecord;
   plan: Plan;
 }
+
+export interface JobApproveData {
+  job: JobRecord;
+  verification?: JobProjectVerification;
+}
+
+export interface PrepareJobData {
+  job: JobRecord;
+}
+
+export interface RemoveWorktreeData {
+  job: JobRecord;
+}
+
+export interface StartJobData {
+  job: JobRecord;
+}
+
+export interface ApprovalSafePreflight {
+  projectId: string;
+  checkedAt: string;
+  ok: boolean;
+  repository: {
+    exists: boolean;
+    isDirectory: boolean;
+    isGitRepository: boolean;
+  };
+  git: {
+    root?: string;
+    branch?: string;
+    detachedHead: boolean;
+    headCommit?: string;
+    clean: boolean;
+    changedFiles: string[];
+  };
+  policy: {
+    defaultBranch: string;
+    branchMatches: boolean;
+    commandsValid: boolean;
+  };
+  issues: Array<{
+    code: string;
+    severity: "error" | "warning";
+    message: string;
+  }>;
+}
+
+export interface ProjectInUseDetails {
+  projectId?: string;
+  activeJobCount?: number;
+  jobIds?: string[];
+}
+
 
 export interface JobEvent {
   sequence: number;

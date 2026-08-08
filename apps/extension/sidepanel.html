@@ -283,10 +283,292 @@
           <span id="job-updated-at" class="status-value">-</span>
         </div>
 
+        <!-- Sub-section: PROJECT BINDING -->
+        <div id="job-binding-section" class="sub-section">
+          <h3 class="card-subtitle">PROJECT BINDING</h3>
+          <div id="job-binding-warning" class="info-box info-box-error hidden">
+            Project Binding: MISSING - This is a legacy job created before project binding was introduced.
+          </div>
+          <div id="job-binding-fields">
+            <div class="field">
+              <span class="label">Bound Project ID:</span>
+              <span id="job-binding-project-id" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Display Name:</span>
+              <span id="job-binding-display-name" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Repository Path:</span>
+              <span id="job-binding-repo-path" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Default Branch:</span>
+              <span id="job-binding-default-branch" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Project Created At:</span>
+              <span id="job-binding-project-created-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Project Updated At:</span>
+              <span id="job-binding-project-updated-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Bound At:</span>
+              <span id="job-binding-bound-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Commands Count:</span>
+              <span id="job-binding-commands-count" class="status-value">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-section: PROJECT VERIFICATION -->
+        <div id="job-verification-section" class="sub-section">
+          <h3 class="card-subtitle">PROJECT VERIFICATION</h3>
+          <div id="job-verification-notice" class="text-muted">Verification Status: NOT VERIFIED</div>
+          <div id="job-verification-fields" class="hidden">
+            <div class="field">
+              <span class="label">Status:</span>
+              <span id="job-verification-status" class="status-value badge-state badge-ready">VERIFIED</span>
+            </div>
+            <div class="field">
+              <span class="label">Verified At:</span>
+              <span id="job-verification-verified-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Configured Path:</span>
+              <span id="job-verification-configured-path" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Canonical Path:</span>
+              <span id="job-verification-canonical-path" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Git Root:</span>
+              <span id="job-verification-git-root" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Branch:</span>
+              <span id="job-verification-branch" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">HEAD Commit:</span>
+              <span id="job-verification-head-commit" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Working Tree:</span>
+              <span id="job-verification-clean" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Commands Valid:</span>
+              <span id="job-verification-commands-valid" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Origin URL:</span>
+              <span id="job-verification-origin-url" class="status-value">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-section: WORKTREE -->
+        <div id="job-worktree-section" class="sub-section">
+          <h3 class="card-subtitle">WORKTREE</h3>
+          <div id="job-worktree-not-prepared" class="text-muted">Not Prepared</div>
+          <div id="job-worktree-fields" class="hidden">
+            <div class="field">
+              <span class="label">Status:</span>
+              <span id="job-worktree-status" class="status-value badge-state">NOT_PREPARED</span>
+            </div>
+            <div id="job-worktree-preparing-indicator" class="hidden text-muted">&#8987; Preparing worktree&hellip;</div>
+            <div class="field">
+              <span class="label">Worktree Path:</span>
+              <span id="job-worktree-path" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Branch Name:</span>
+              <span id="job-worktree-branch" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Created At:</span>
+              <span id="job-worktree-created-at" class="status-value">-</span>
+            </div>
+            <div id="job-worktree-error-container" class="hidden">
+              <div class="field">
+                <span class="label">Error Code:</span>
+                <span id="job-worktree-error-code" class="status-value badge-error">-</span>
+              </div>
+              <div class="field-vertical">
+                <span class="label">Error Message:</span>
+                <div id="job-worktree-error-message" class="text-muted">-</div>
+              </div>
+              <div id="btn-retry-prepare-row" class="actions-row hidden">
+                <button id="btn-retry-prepare" class="btn btn-accent" type="button">Retry Prepare</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-section: EXECUTION -->
+        <div id="job-execution-section" class="sub-section">
+          <h3 class="card-subtitle">EXECUTION</h3>
+          <div id="job-execution-not-started" class="text-muted">Not Started</div>
+          <div id="job-execution-fields" class="hidden">
+            <div class="field">
+              <span class="label">Status:</span>
+              <span id="job-execution-status" class="status-value badge-state">NOT_STARTED</span>
+            </div>
+            <div id="job-execution-starting-indicator" class="hidden text-muted">&#8987; Starting execution&hellip;</div>
+            <div class="field">
+              <span class="label">Started At:</span>
+              <span id="job-execution-started-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Finished At:</span>
+              <span id="job-execution-finished-at" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Duration:</span>
+              <span id="job-execution-duration" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Exit Code:</span>
+              <span id="job-execution-exit-code" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Current Agent:</span>
+              <span id="job-execution-current-agent" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Log Path:</span>
+              <span id="job-execution-log-path" class="status-value">-</span>
+            </div>
+            <div id="job-execution-error-container" class="hidden">
+              <div class="field">
+                <span class="label">Error Code:</span>
+                <span id="job-execution-error-code" class="status-value badge-error">-</span>
+              </div>
+              <div class="field-vertical">
+                <span class="label">Error Message:</span>
+                <div id="job-execution-error-message" class="text-muted">-</div>
+              </div>
+              <div id="btn-retry-start-row" class="actions-row hidden">
+                <button id="btn-retry-start" class="btn btn-accent" type="button">Retry Start</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-section: APPROVAL GATE -->
+        <div id="approval-gate-section" class="sub-section">
+          <h3 class="card-subtitle">APPROVAL GATE</h3>
+          <div class="field">
+            <span class="label">Gate Status:</span>
+            <span id="approval-gate-status" class="status-value badge-state">NOT_RUN</span>
+          </div>
+
+          <div id="approval-gate-error-container" class="hidden">
+            <div class="field">
+              <span class="label">Error Code:</span>
+              <span id="approval-gate-error-code" class="status-value badge-error">-</span>
+            </div>
+            <div class="field-vertical">
+              <span class="label">Message:</span>
+              <div id="approval-gate-message" class="text-muted">-</div>
+            </div>
+            <div id="approval-gate-guidance" class="info-box info-box-error hidden"></div>
+
+            <div id="approval-gate-preflight-container" class="hidden">
+              <div class="field">
+                <span class="label">Checked At:</span>
+                <span id="approval-gate-checked-at" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Overall:</span>
+                <span id="approval-gate-overall" class="status-value badge-state">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Configured Path:</span>
+                <span id="approval-gate-configured-path" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Canonical Path:</span>
+                <span id="approval-gate-canonical-path" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Repo Exists:</span>
+                <span id="approval-gate-repo-exists" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Is Directory:</span>
+                <span id="approval-gate-is-directory" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Is Git Repo:</span>
+                <span id="approval-gate-is-git-repo" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Git Root:</span>
+                <span id="approval-gate-git-root" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Branch:</span>
+                <span id="approval-gate-branch" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Default Branch:</span>
+                <span id="approval-gate-default-branch" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Branch Matches:</span>
+                <span id="approval-gate-branch-matches" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Detached HEAD:</span>
+                <span id="approval-gate-detached-head" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">HEAD Commit:</span>
+                <span id="approval-gate-head-commit" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Working Tree Clean:</span>
+                <span id="approval-gate-working-tree-clean" class="status-value">-</span>
+              </div>
+              <div class="field">
+                <span class="label">Commands Valid:</span>
+                <span id="approval-gate-commands-valid" class="status-value">-</span>
+              </div>
+
+              <div class="field-vertical">
+                <span class="label">Changed Files:</span>
+                <div id="approval-gate-changed-files" class="changed-files-box"></div>
+              </div>
+
+              <div class="field-vertical">
+                <span class="label">Preflight Issues:</span>
+                <div id="approval-gate-issues" class="issues-box"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="actions-column">
           <div class="actions-row">
             <button id="btn-refresh-job" class="btn" type="button" disabled>Refresh Job</button>
             <button id="btn-approve-job" class="btn btn-accent" type="button" disabled>Approve Job</button>
+          </div>
+          <div id="prepare-job-row" class="actions-row hidden">
+            <button id="btn-prepare-job" class="btn btn-accent" type="button" disabled>Prepare Job</button>
+          </div>
+          <div id="remove-worktree-row" class="actions-row hidden">
+            <button id="btn-remove-worktree" class="btn btn-danger" type="button" disabled>Remove Worktree</button>
+          </div>
+          <div id="start-job-row" class="actions-row hidden">
+            <button id="btn-start-job" class="btn btn-accent" type="button" disabled>Start Job</button>
+            <button id="btn-open-log" class="btn" type="button" disabled>Open Execution Log</button>
           </div>
           <div class="actions-row">
             <button id="btn-cancel-job" class="btn btn-danger" type="button" disabled>Cancel Job</button>

@@ -1,0 +1,3 @@
+import {SchedulerPlan} from "./SchedulerPlan.js";
+import type {ScheduledTaskDefinition,SchedulerResult} from "./SchedulerTypes.js";
+export class MultiAgentScheduler { readonly plan:SchedulerPlan; constructor(tasks:ScheduledTaskDefinition[]|SchedulerPlan){this.plan=tasks instanceof SchedulerPlan?tasks:new SchedulerPlan(tasks)} getReadyTasks(){return this.plan.getReadyTasks()} start(taskId:string){return this.plan.start(taskId)} complete(taskId:string){return this.plan.complete(taskId)} fail(taskId:string){return this.plan.fail(taskId)} cancel(taskId:string){return this.plan.cancel(taskId)} getResult():SchedulerResult{return this.plan.result()} }

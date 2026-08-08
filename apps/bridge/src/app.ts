@@ -1,19 +1,19 @@
-﻿import Fastify, { type FastifyInstance } from 'fastify';
-import { validatePlan } from '@local-orchestrator/contracts';
-import { JobStore } from '@local-orchestrator/orchestrator';
-import { ProjectPreflightService, ProjectRegistry, type ProjectInput } from '@local-orchestrator/projects';
-import { join } from 'node:path';
-import { BRIDGE_NAME, BRIDGE_VERSION, BRIDGE_API_VERSION } from './version.js';
-import { ApiError } from './errors/api-error.js';
-import { mapError, payload } from './errors/error-mapper.js';
-import { requireBearerToken } from './auth/bearer-auth.js';
-import { PlanStore } from './jobs/plan-store.js';
-import { BridgeJobService } from './jobs/bridge-job-service.js';
+import Fastify, { type FastifyInstance } from 'fastify';
+import {validatePlan} from '@local-orchestrator/contracts';
+import {JobStore} from '@local-orchestrator/orchestrator';
+import {ProjectPreflightService,ProjectRegistry,type ProjectInput} from '@local-orchestrator/projects';
+import {join} from 'node:path';
+import {BRIDGE_NAME,BRIDGE_VERSION,BRIDGE_API_VERSION} from './version.js';
+import {ApiError} from './errors/api-error.js';
+import {mapError,payload} from './errors/error-mapper.js';
+import {requireBearerToken} from './auth/bearer-auth.js';
+import {PlanStore} from './jobs/plan-store.js';
+import {BridgeJobService} from './jobs/bridge-job-service.js';
 export interface BuildBridgeAppOptions { runtimeRootDirectory?: string; authToken?: string; logger?: boolean; now?: () => Date; generateJobId?: () => string; allowedProjectRoots?: string[]; gitExecutable?: string; projectPreflightTimeoutMs?: number; }
 const reason = (x: unknown, required: boolean) => { if (x === undefined && !required) return 'Approved by user via Local Bridge API'; if (typeof x !== 'string') throw new ApiError('INVALID_REQUEST_BODY', 'Reason must be a string between 3 and 500 characters.', 400); const s=x.trim(); if(s.length<3||s.length>500) throw new ApiError('INVALID_REQUEST_BODY','Reason must be a string between 3 and 500 characters.',400); return s; };
 export function buildBridgeApp(o: BuildBridgeAppOptions = {}): FastifyInstance { const root=o.runtimeRootDirectory??join(process.cwd(),'runtime'), jobsRoot=join(root,'jobs'); const jobs=new JobStore(jobsRoot),registry=new ProjectRegistry(root,o.allowedProjectRoots),preflight=new ProjectPreflightService(o.allowedProjectRoots,o.gitExecutable,o.projectPreflightTimeoutMs); const svc=new BridgeJobService(jobs,new PlanStore(join(root,'plans')),jobsRoot,registry,preflight,o.generateJobId); const app=Fastify({logger:o.logger??false}), auth=async(r:any)=>requireBearerToken(r,o.authToken), ok=(data:unknown)=>({success:true,data});
- app.get('/api/health',async()=>({status:'ok',version:BRIDGE_VERSION,timestamp:(o.now??(()=>new Date()))().toISOString()})); app.get('/api/version',async()=>ok({name:BRIDGE_NAME,version:BRIDGE_VERSION,apiVersion:BRIDGE_API_VERSION}));
+ app.get('/api/health',async()=>({status:'ok',version:BRIDGE_VERSION,timestamp:(o.now??(()=>new Date()))().toISOString()}));app.get('/api/version',async()=>ok({name:BRIDGE_NAME,version:BRIDGE_VERSION,apiVersion:BRIDGE_API_VERSION}));
  app.post('/api/plans/validate',{preHandler:auth},async(r:any)=>{const v=validatePlan(r.body);if(!v.success)throw new ApiError('PLAN_VALIDATION_FAILED','The submitted plan is invalid.',400,{issues:v.issues});return ok({valid:true,plan:v.data});});
- app.post('/api/jobs',{preHandler:auth},async(r:any,q:any)=>q.code(201).send(ok(await svc.createJobFromPlan(r.body)))); app.get('/api/jobs/:jobId',{preHandler:auth},async(r:any)=>ok(await svc.getJobDetails(r.params.jobId))); app.post('/api/jobs/:jobId/approve',{preHandler:auth},async(r:any)=>ok(await svc.approveJob(r.params.jobId,reason(r.body?.reason,false)))); app.post('/api/jobs/:jobId/cancel',{preHandler:auth},async(r:any)=>ok(await svc.cancelJob(r.params.jobId,reason(r.body?.reason,true)))); app.get('/api/jobs/:jobId/events',{preHandler:auth},async(r:any)=>ok(await svc.getJobEvents(r.params.jobId)));
+ app.post('/api/jobs',{preHandler:auth},async(r:any,q:any)=>q.code(201).send(ok(await svc.createJobFromPlan(r.body))));app.get('/api/jobs/:jobId',{preHandler:auth},async(r:any)=>ok(await svc.getJobDetails(r.params.jobId)));app.post('/api/jobs/:jobId/approve',{preHandler:auth},async(r:any)=>ok(await svc.approveJob(r.params.jobId,reason(r.body?.reason,false))));app.post('/api/jobs/:jobId/cancel',{preHandler:auth},async(r:any)=>ok(await svc.cancelJob(r.params.jobId,reason(r.body?.reason,true))));app.get('/api/jobs/:jobId/events',{preHandler:auth},async(r:any)=>ok(await svc.getJobEvents(r.params.jobId)));app.post('/api/jobs/:jobId/prepare',{preHandler:auth},async(r:any)=>ok(await svc.prepareJob(r.params.jobId)));app.post('/api/jobs/:jobId/start',{preHandler:auth},async(r:any)=>ok(await svc.startJob(r.params.jobId)));
  app.get('/api/projects',{preHandler:auth},async()=>ok({projects:await registry.listProjects()})); app.post('/api/projects',{preHandler:auth},async(r:any,q:any)=>q.code(201).send(ok({project:await registry.registerProject(r.body as ProjectInput)}))); app.get('/api/projects/:projectId',{preHandler:auth},async(r:any)=>ok({project:await registry.getProject(r.params.projectId)})); app.put('/api/projects/:projectId',{preHandler:auth},async(r:any)=>{const body=r.body as Record<string,unknown>;if(body&&'projectId' in body)throw new ApiError('INVALID_PROJECT_DEFINITION','Project ID cannot be changed.',400);return ok({project:await registry.updateProject(r.params.projectId,{displayName:body.displayName,repositoryPath:body.repositoryPath,defaultBranch:body.defaultBranch,commands:body.commands} as any)});}); app.delete('/api/projects/:projectId',{preHandler:auth},async(r:any)=>{await svc.deleteProject(r.params.projectId);return ok({deleted:true,projectId:r.params.projectId});}); app.post('/api/projects/:projectId/preflight',{preHandler:auth},async(r:any)=>ok({preflight:await preflight.runPreflight(await registry.getProject(r.params.projectId))}));
  app.setErrorHandler((raw,_req,rep)=>{const e=(raw as {code?:string})?.code==='FST_ERR_CTP_INVALID_JSON_BODY'?new ApiError('INVALID_JSON_BODY','The request body contains invalid JSON.',400):mapError(raw);rep.code(e.statusCode).send(payload(e));}); return app; }
