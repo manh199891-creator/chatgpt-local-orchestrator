@@ -7,5 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "@local-orchestrator/contracts": "workspace:*"
   }
 }

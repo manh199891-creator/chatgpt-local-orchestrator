@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --recursive build",
-    "test": "vitest run --workspace vitest.workspace.ts",
+    "test": "vitest run --workspace vitest.workspace.ts --maxWorkers=1 --minWorkers=1",
     "typecheck": "pnpm --recursive typecheck",
     "dev:bridge": "pnpm --filter @local-orchestrator/bridge dev"
   },

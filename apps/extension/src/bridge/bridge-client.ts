@@ -17,6 +17,7 @@ import {
   PrepareJobData,
   RemoveWorktreeData,
   StartJobData,
+  ReviewPackage
 } from "./bridge-types.js";
 import { BridgeError } from "./bridge-errors.js";
 
@@ -138,6 +139,14 @@ export class BridgeClient {
     const sanitizedId = encodeURIComponent(jobId);
     return this.request<PrepareJobData>(`/api/jobs/${sanitizedId}/prepare`, {
       method: "POST",
+      token,
+    });
+  }
+
+  async getReviewPackage(jobId: string, token: string): Promise<ReviewPackage> {
+    const sanitizedId = encodeURIComponent(jobId);
+    return this.request<ReviewPackage>(`/api/jobs/${sanitizedId}/review-package`, {
+      method: "GET",
       token,
     });
   }

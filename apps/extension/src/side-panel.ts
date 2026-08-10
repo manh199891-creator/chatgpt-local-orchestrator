@@ -23,6 +23,7 @@ import {
   ApprovalSafePreflight,
   ProjectInUseDetails,
   JobWorktree,
+  ReviewPackage
 } from "./bridge/bridge-types.js";
 
 export function validateCommandsJsonInput(raw: string): { valid: boolean; commands?: ProjectCommandDefinition[]; error?: string } {
@@ -198,6 +199,16 @@ export function initSidePanel(): void {
   const elJobBindingDisplayName = document.getElementById("job-binding-display-name") as HTMLSpanElement;
   const elJobBindingRepoPath = document.getElementById("job-binding-repo-path") as HTMLSpanElement;
   const elJobBindingDefaultBranch = document.getElementById("job-binding-default-branch") as HTMLSpanElement;
+
+  // DOM Elements - Review Package
+  const elJobReviewStatus = document.getElementById("job-review-status") as HTMLSpanElement;
+  const elJobReviewAgentType = document.getElementById("job-review-agent-type") as HTMLSpanElement;
+  const elJobReviewVerifications = document.getElementById("job-review-verifications") as HTMLSpanElement;
+  const elJobReviewIssues = document.getElementById("job-review-issues") as HTMLSpanElement;
+  const elJobReviewRepair = document.getElementById("job-review-repair") as HTMLSpanElement;
+  const elJobReviewIssuesDetailContainer = document.getElementById("job-review-issues-detail-container") as HTMLDivElement;
+  const elJobReviewIssuesDetail = document.getElementById("job-review-issues-detail") as HTMLDivElement;
+  const btnPrepareChatgpt = document.getElementById("btn-prepare-chatgpt") as HTMLButtonElement;
   const elJobBindingProjectCreatedAt = document.getElementById("job-binding-project-created-at") as HTMLSpanElement;
   const elJobBindingProjectUpdatedAt = document.getElementById("job-binding-project-updated-at") as HTMLSpanElement;
   const elJobBindingBoundAt = document.getElementById("job-binding-bound-at") as HTMLSpanElement;
@@ -297,6 +308,7 @@ export function initSidePanel(): void {
   btnCheckBridge.addEventListener("click", () => void handleCheckBridge());
   btnSaveToken.addEventListener("click", () => void handleSaveToken());
   btnClearToken.addEventListener("click", () => void handleClearToken());
+  btnPrepareChatgpt.addEventListener("click", handlePrepareChatgpt);
 
   // Event Listeners - Project Registry
   btnRefreshProjects.addEventListener("click", () => void handleRefreshProjects());
@@ -1487,6 +1499,9 @@ export function initSidePanel(): void {
       renderExecutionUI(undefined);
       stopPolling();
 
+      // Reset Review UI
+      renderReviewUI(undefined);
+
       // Reset Approval Gate
       approvalGateState = "NOT_RUN";
       approvalGateError = null;
@@ -1553,13 +1568,123 @@ export function initSidePanel(): void {
       const execStatus = job.execution?.status;
       if (execStatus === "RUNNING" || execStatus === "STARTING") {
         startPolling(job.jobId);
+        renderReviewUI(undefined);
       } else if (!execStatus || TERMINAL_EXECUTION_STATES.includes(execStatus)) {
         stopPolling();
+        if ((TERMINAL_EXECUTION_STATES.includes(execStatus || "") || job.state === "COMPLETED" || job.state === "FAILED" || job.state === "CANCELLED") && job.jobId) {
+          fetchReviewPackage(job.jobId).catch(() => {});
+        } else {
+          renderReviewUI(undefined);
+        }
       }
       renderApprovalGateUI();
     }
 
     updateActionStates();
+  }
+
+  let currentReviewPackage: ReviewPackage | null = null;
+
+  async function fetchReviewPackage(jobId: string) {
+    if (!currentToken) return;
+    try {
+      const rp = await bridgeClient.getReviewPackage(jobId, currentToken);
+      currentReviewPackage = rp;
+      renderReviewUI(rp);
+    } catch (e) {
+      currentReviewPackage = null;
+      renderReviewUI(undefined);
+    }
+  }
+
+  function renderReviewUI(rp: ReviewPackage | undefined): void {
+    const section = document.getElementById("job-review-section");
+    if (!rp) {
+      if (section) section.classList.add("hidden");
+      currentReviewPackage = null;
+      elJobReviewStatus.textContent = "NOT_LOADED";
+      elJobReviewStatus.className = "status-value badge-state";
+      elJobReviewAgentType.textContent = "-";
+      elJobReviewVerifications.textContent = "-";
+      elJobReviewIssues.textContent = "-";
+      elJobReviewRepair.textContent = "-";
+      elJobReviewIssuesDetailContainer.style.display = "none";
+      btnPrepareChatgpt.disabled = true;
+      return;
+    }
+    if (section) section.classList.remove("hidden");
+
+    elJobReviewStatus.textContent = rp.status;
+    if (rp.status === "PASS") {
+      elJobReviewStatus.className = "status-value badge-state badge-ready";
+    } else if (rp.status === "FAIL" || rp.status === "REPAIR_EXHAUSTED" || rp.status === "CANCELLED") {
+      elJobReviewStatus.className = "status-value badge-state badge-not-ready";
+    } else {
+      elJobReviewStatus.className = "status-value badge-state";
+    }
+
+    elJobReviewAgentType.textContent = rp.agentType || "-";
+
+    const v = rp.verification;
+    const vStr = `Build: ${v?.build?.status || "-"} | Typecheck: ${v?.typecheck?.status || "-"} | Tests: ${v?.tests?.status || "-"}`;
+    elJobReviewVerifications.textContent = vStr;
+
+    elJobReviewIssues.textContent = rp.issues && rp.issues.length > 0 ? `${rp.issues.length} issue(s)` : "None";
+
+    if (rp.issues && rp.issues.length > 0) {
+      elJobReviewIssuesDetailContainer.style.display = "flex";
+      elJobReviewIssuesDetail.textContent = "";
+      rp.issues.forEach(issue => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "4px";
+        div.style.padding = "4px";
+        div.style.border = "1px solid var(--border-color)";
+        div.textContent = `[${issue.severity}] ${issue.ruleId} (${issue.code}) at ${issue.path || issue.field || "unknown"}: ${issue.message} ${issue.repairable ? "(Repairable)" : ""}`;
+        elJobReviewIssuesDetail.appendChild(div);
+      });
+    } else {
+      elJobReviewIssuesDetailContainer.style.display = "none";
+    }
+
+    if (rp.repair && rp.repair.performed) {
+      elJobReviewRepair.textContent = `${rp.repair.repairStatus} (Attempts: ${rp.repair.attemptsPerformed || 0}/${rp.repair.maxAttempts || "-"}) -> Review: ${rp.repair.postRepairReviewStatus || "-"}`;
+    } else {
+      elJobReviewRepair.textContent = "Not performed";
+    }
+
+    btnPrepareChatgpt.disabled = false;
+  }
+
+  function handlePrepareChatgpt() {
+    if (!currentReviewPackage) return;
+
+    // Create bounded representation
+    const boundedData = {
+      packageVersion: currentReviewPackage.packageVersion,
+      jobId: currentReviewPackage.jobId,
+      taskId: currentReviewPackage.taskId,
+      agentType: currentReviewPackage.agentType,
+      status: currentReviewPackage.status,
+      execution: currentReviewPackage.execution,
+      finalReviewStatus: currentReviewPackage.finalReviewStatus,
+      verification: currentReviewPackage.verification,
+      changedFiles: currentReviewPackage.changedFiles,
+      issues: currentReviewPackage.issues,
+      repair: currentReviewPackage.repair,
+      tasks: currentReviewPackage.tasks,
+    };
+
+    const text = JSON.stringify(boundedData, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = btnPrepareChatgpt.textContent;
+      btnPrepareChatgpt.textContent = "Copied!";
+      setTimeout(() => {
+        btnPrepareChatgpt.textContent = originalText;
+      }, 2000);
+    }).catch((err) => {
+      console.error("Failed to copy", err);
+      alert("Failed to copy review package to clipboard.");
+    });
   }
 
   function renderApprovalGateUI(): void {

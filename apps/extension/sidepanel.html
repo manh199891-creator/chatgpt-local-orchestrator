@@ -461,6 +461,40 @@
           </div>
         </div>
 
+        <!-- Sub-section: REVIEW PACKAGE -->
+        <div id="job-review-section" class="sub-section">
+          <h3 class="card-subtitle">REVIEW PACKAGE</h3>
+          <div id="job-review-fields">
+            <div class="field">
+              <span class="label">Status:</span>
+              <span id="job-review-status" class="status-value badge-state">NOT_LOADED</span>
+            </div>
+            <div class="field">
+              <span class="label">Agent Type:</span>
+              <span id="job-review-agent-type" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Verifications:</span>
+              <span id="job-review-verifications" class="status-value text-muted">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Issues:</span>
+              <span id="job-review-issues" class="status-value">-</span>
+            </div>
+            <div class="field">
+              <span class="label">Repair:</span>
+              <span id="job-review-repair" class="status-value">-</span>
+            </div>
+            <div class="field-vertical" id="job-review-issues-detail-container" style="display: none;">
+              <span class="label">Issues Detail:</span>
+              <div id="job-review-issues-detail" class="text-muted" style="max-height: 200px; overflow-y: auto;">-</div>
+            </div>
+            <div class="actions-row">
+              <button id="btn-prepare-chatgpt" class="btn btn-primary" type="button" title="Copy Review Package data to clipboard for ChatGPT">Prepare for ChatGPT Review</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Sub-section: APPROVAL GATE -->
         <div id="approval-gate-section" class="sub-section">
           <h3 class="card-subtitle">APPROVAL GATE</h3>

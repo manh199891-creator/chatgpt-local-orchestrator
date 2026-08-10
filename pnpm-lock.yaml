@@ -43,7 +43,11 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/extension: {}
+  apps/extension:
+    dependencies:
+      '@local-orchestrator/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
 
   packages/contracts:
     dependencies:
@@ -56,6 +60,13 @@ importers:
         version: 5.9.3
 
   packages/orchestrator:
+    dependencies:
+      '@local-orchestrator/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.10.0

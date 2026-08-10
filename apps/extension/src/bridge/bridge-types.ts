@@ -289,3 +289,41 @@ export interface ProjectDeleteData {
 export interface ProjectPreflightData {
   preflight: ProjectPreflightResult;
 }
+
+import type {
+    ReviewPackage,
+    ReviewPackageStatus,
+    ReviewPackageVerification,
+    ReviewPackageIssue,
+    ReviewPackageRepairSummary,
+    ReviewPackageTaskSummary,
+    ReviewPackageExecutionSummary,
+    ReviewPackageVerificationStatus,
+    ReviewPackageExecutionStatus,
+    ReviewPackageRepairStatus,
+    ReviewPackageReviewStatus,
+    ReviewPackageVerificationState,
+    ReviewPackageAgentType,
+    ReviewPackageTaskStatus
+} from '@local-orchestrator/contracts';
+
+export type {
+    ReviewPackage,
+    ReviewPackageStatus,
+    ReviewPackageVerification,
+    ReviewPackageIssue,
+    ReviewPackageRepairSummary,
+    ReviewPackageTaskSummary,
+    ReviewPackageExecutionSummary,
+    ReviewPackageVerificationStatus,
+    ReviewPackageExecutionStatus,
+    ReviewPackageRepairStatus,
+    ReviewPackageReviewStatus,
+    ReviewPackageVerificationState,
+    ReviewPackageAgentType,
+    ReviewPackageTaskStatus
+};
+
+export interface ReviewPackageData {
+  package: ReviewPackage;
+}

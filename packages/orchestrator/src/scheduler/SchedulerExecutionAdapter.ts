@@ -4,12 +4,14 @@ import {JobStore} from "../job-store.js";
 import {ScheduledTaskStatus} from "./SchedulerTypes.js";
 import {AgentType} from "../runtime/AgentType.js";
 import {ExecutionStatus} from "../job-types.js";
+import type {OrchestrationRuntime} from "../orchestration/OrchestrationRuntime.js";
 
 export class SchedulerExecutionAdapter {
     constructor(
         private readonly scheduler: MultiAgentScheduler,
         private readonly execution: ExecutionService,
-        private readonly jobs: JobStore
+        private readonly jobs: JobStore,
+        private readonly orchestration?: OrchestrationRuntime
     ) {}
 
     /**
@@ -47,6 +49,7 @@ export class SchedulerExecutionAdapter {
             const currentTaskStatus = this.scheduler.plan.getTask(task.taskId).status;
             if (currentTaskStatus !== ScheduledTaskStatus.RUNNING) {
                 // If it was cancelled by cancelTask, it might not be running anymore.
+                await this.orchestration?.processTerminal(task.jobId, { task: this.scheduler.plan.getTask(task.taskId), executionId: finalStatus.executionId });
                 return true;
             }
 
@@ -57,6 +60,7 @@ export class SchedulerExecutionAdapter {
             } else {
                 this.scheduler.fail(task.taskId);
             }
+            await this.orchestration?.processTerminal(task.jobId, { task: this.scheduler.plan.getTask(task.taskId), executionId: finalStatus.executionId });
         } catch (error) {
             const currentTaskStatus = this.scheduler.plan.getTask(task.taskId).status;
             if (currentTaskStatus === ScheduledTaskStatus.RUNNING) {
@@ -77,9 +81,9 @@ export class SchedulerExecutionAdapter {
         if (task.status === ScheduledTaskStatus.RUNNING) {
             const job = await this.jobs.loadJob(task.jobId);
             await this.execution.cancel(job);
-            // After cancelling the execution, ExecutionService handles process termination.
-            // But we must also mark the scheduler task as CANCELLED.
-            this.scheduler.cancel(taskId);
+            // Execution cancellation resolves only after close and terminal persistence.
+            // executeNext may have consumed that terminal state meanwhile.
+            if (this.scheduler.plan.getTask(taskId).status === ScheduledTaskStatus.RUNNING) this.scheduler.cancel(taskId);
         } else if (task.status === ScheduledTaskStatus.PENDING || task.status === ScheduledTaskStatus.READY) {
             this.scheduler.cancel(taskId);
         }

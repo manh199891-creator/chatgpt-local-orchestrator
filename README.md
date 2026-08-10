@@ -3,11 +3,11 @@
 ChatGPT Local Orchestrator is a local-first orchestration framework designed to bridge browser-based ChatGPT sessions with local CLI capabilities, autonomous software engineering agents (Codex and Antigravity), and structured verification pipelines.
 
 ## Current Status
-- **Phase**: Phase 0 (Initialization & Shell Setup)
-- **Local Bridge**: Active minimal Fastify server running on `127.0.0.1:43120` with `/api/health` endpoint.
-- **Browser Extension**: Shell UI available (Manifest V3 side panel). Bridge connection is not yet implemented.
-- **Automation**: Prompts are not automatically dispatched; Codex and Antigravity execution via Bridge is not enabled.
-- **Infrastructure**: Worktree manager and automated review loop are not yet implemented.
+- **Phase**: Phases 6–14 complete; Phase 14 Production Hardening passed.
+- **Local Bridge**: Authenticated local Bridge composes execution, review, repair, durable package publication, and safe startup recovery.
+- **Browser Extension**: Manifest V3 side panel integrates with the local Bridge and keeps ChatGPT review handoff explicit.
+- **Automation boundary**: ChatGPT Web automation, DOM manipulation, response scraping, and automatic message submission are not implemented.
+- **Operations**: See [docs/operations.md](docs/operations.md) for startup, recovery, durable state, and supported limitations.
 
 ## Architecture Overview
 ```
@@ -105,13 +105,10 @@ Expected response:
 6. Click the extension icon in the toolbar to open the **ChatGPT Local Orchestrator** Side Panel.
 
 ## Current Limitations
-- Extension side panel buttons `Validate Plan` and `Approve & Run` are disabled.
-- `Check Bridge` button displays placeholder message; live RPC/REST connection to `http://127.0.0.1:43120` will be established in Phase 1.
-- No direct DOM reading or automated prompt submission to ChatGPT Web.
-- No git worktree isolation manager for agent tasks.
+- No process reattachment or PID-based execution recovery after Bridge restart.
+- Scheduler concurrency remains one; full SchedulerPlan durability is not implemented.
+- No automatic interrupted-execution retry or automatic agent fallback.
+- No direct DOM reading, automated prompt submission, or response scraping in ChatGPT Web.
 
 ## Phase Roadmap
-- **Phase 0 (Current)**: Monorepo workspace initialization, minimal Local Bridge health endpoint, extension shell UI, baseline documentation.
-- **Phase 1**: Bridge REST/WebSocket API extension, extension side panel bridge communication, job state tracking.
-- **Phase 2**: Local Orchestrator CLI engine, Git worktree isolation, agent execution adapter (Codex / Antigravity).
-- **Phase 3**: End-to-end prompt dispatch, review package generation, automated verification loops.
+- **Phases 6–14 (Complete)**: Local Bridge orchestration, project preflight and worktrees, agent execution and streaming, review/repair pipelines, Browser Extension controls, durable review packages, restart recovery, Windows reliability hardening, and the Phase 14 production gate.
