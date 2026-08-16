@@ -17,8 +17,10 @@ import {
   PrepareJobData,
   RemoveWorktreeData,
   StartJobData,
-  ReviewPackage
+  ReviewPackage,
+  WorkflowData, WorkflowResultPackageData
 } from "./bridge-types.js";
+import type { WorkflowPlan, BrowserSupervisorDiagnosticSnapshot } from "@local-orchestrator/contracts";
 import { BridgeError } from "./bridge-errors.js";
 
 export interface BridgeClientOptions {
@@ -227,6 +229,12 @@ export class BridgeClient {
     return res.preflight;
   }
 
+  async submitWorkflow(plan: WorkflowPlan, token: string, idempotencyKey?: string): Promise<WorkflowData> { return this.request<WorkflowData>("/api/workflows", { method: "POST", token, body: plan, idempotencyKey }); }
+  async getWorkflow(workflowId: string, token: string): Promise<WorkflowData> { return this.request<WorkflowData>(`/api/workflows/${encodeURIComponent(workflowId)}`, { method: "GET", token }); }
+  async cancelWorkflow(workflowId: string, token: string): Promise<WorkflowData> { return this.request<WorkflowData>(`/api/workflows/${encodeURIComponent(workflowId)}/cancel`, { method: "POST", token }); }
+  async getWorkflowResultPackage(workflowId: string, token: string): Promise<WorkflowResultPackageData> { return this.request<WorkflowResultPackageData>(`/api/workflows/${encodeURIComponent(workflowId)}/result-package`, { method: "GET", token }); }
+  async publishBrowserSupervisorDiagnostics(value: BrowserSupervisorDiagnosticSnapshot, token: string): Promise<{stored:boolean;observedAt:string}> { return this.request<{stored:boolean;observedAt:string}>("/api/internal/browser-supervisor-diagnostics", { method: "POST", token, body: value }); }
+
   private async request<T>(
     path: string,
     options: {
@@ -235,6 +243,7 @@ export class BridgeClient {
       body?: unknown;
       requireAuth?: boolean;
       responseMode?: "raw" | "envelope";
+      idempotencyKey?: string;
     }
   ): Promise<T> {
     const responseMode = options.responseMode ?? "envelope";
@@ -252,6 +261,7 @@ export class BridgeClient {
     if (options.body !== undefined) {
       headers["Content-Type"] = "application/json";
     }
+    if (options.idempotencyKey) headers["X-Idempotency-Key"] = options.idempotencyKey;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);

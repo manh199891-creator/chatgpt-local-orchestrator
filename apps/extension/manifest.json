@@ -5,7 +5,9 @@
   "description": "Browser extension shell for ChatGPT Local Orchestrator local bridge interface.",
   "permissions": [
     "sidePanel",
-    "storage"
+    "storage",
+    "alarms",
+    "scripting"
   ],
   "background": {
     "service_worker": "dist/background.js",
@@ -18,6 +20,14 @@
     "default_title": "ChatGPT Local Orchestrator"
   },
   "host_permissions": [
-    "http://127.0.0.1:43120/*"
+    "http://127.0.0.1:43120/*",
+    "https://chatgpt.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["dist/chatgpt-content.js"],
+      "run_at": "document_idle"
+    }
   ]
 }

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-23471398-b53d-1867-d662-8dd8b1d1831a-phase16d-scenario-d-bridge-reconnect-v2",
+  "planId": "WF-23471398-b53d-1867-d662-8dd8b1d1831a",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-14T07:27:11.077Z",
+  "updatedAt": "2026-08-14T07:30:48.287Z",
+  "lastEventSequence": 30,
+  "metadata": {
+    "workflowId": "WF-23471398-b53d-1867-d662-8dd8b1d1831a",
+    "workflowGoal": "Phase 16D Manual Acceptance Scenario D bridge outage retest v2: verify Browser Supervisor preserves the exact supervised workflow across a temporary Extension-to-Bridge connectivity outage, enters Bridge-unavailable recovery without resubmission, reconnects using the same workflow identity, discovers the terminal result after connectivity returns, and automatically submits that result exactly once to the originating ChatGPT conversation.",
+    "workflowTaskId": "phase16d-scenario-d-bridge-reconnect-v2",
+    "workflowInstruction": "Wait approximately 180 seconds before making the requested change so there is enough time for the user to create a temporary Chrome-to-Bridge connectivity outage and restore connectivity while this workflow remains active. Then create phase16d-scenario-d-bridge-reconnect-v2.txt at the workflow-owned worktree repository root with the exact text: PHASE 16D SCENARIO D BRIDGE RECONNECT V2 PASS. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16d-scenario-d-bridge-reconnect-v2.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-14T07:27:03.714Z",
+    "projectUpdatedAt": "2026-08-14T07:27:03.714Z",
+    "boundAt": "2026-08-14T07:27:03.714Z",
+    "verification": {
+      "verifiedAt": "2026-08-14T07:27:03.646Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-23471398-b53d-1867-d662-8dd8b1d1831a-owner",
+  "branchName": "job/WF-23471398-b53d-1867-d662-8dd8b1d1831a-owner",
+  "worktreeCreatedAt": "2026-08-14T07:27:11.036Z",
+  "executionId": "75be1e75-b40c-487c-a0ed-c8f816524b8c",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-14T07:27:13.109Z",
+  "finishedAt": "2026-08-14T07:30:47.883Z",
+  "exitCode": 0
+}

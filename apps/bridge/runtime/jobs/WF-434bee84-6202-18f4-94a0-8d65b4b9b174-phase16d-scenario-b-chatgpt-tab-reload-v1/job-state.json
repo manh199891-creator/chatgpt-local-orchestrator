@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-434bee84-6202-18f4-94a0-8d65b4b9b174-phase16d-scenario-b-chatgpt-tab-reload-v1",
+  "planId": "WF-434bee84-6202-18f4-94a0-8d65b4b9b174",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-14T06:58:08.548Z",
+  "updatedAt": "2026-08-14T06:59:12.109Z",
+  "lastEventSequence": 25,
+  "metadata": {
+    "workflowId": "WF-434bee84-6202-18f4-94a0-8d65b4b9b174",
+    "workflowGoal": "Phase 16D Manual Acceptance Scenario B final: verify that Browser Supervisor survives a reload of the exact originating ChatGPT conversation tab while the workflow is active, recovers the trusted source binding and content script, and returns the canonical terminal result automatically exactly once to the same conversation.",
+    "workflowTaskId": "phase16d-scenario-b-chatgpt-tab-reload-v1",
+    "workflowInstruction": "Wait approximately 35 seconds before making the requested change so the originating ChatGPT tab can be reloaded while this workflow is still active. Then create phase16d-scenario-b-chatgpt-tab-reload-v1.txt at the workflow-owned worktree repository root with the exact text: PHASE 16D SCENARIO B CHATGPT TAB RELOAD V1 PASS. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16d-scenario-b-chatgpt-tab-reload-v1.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-14T06:58:06.779Z",
+    "projectUpdatedAt": "2026-08-14T06:58:06.779Z",
+    "boundAt": "2026-08-14T06:58:06.779Z",
+    "verification": {
+      "verifiedAt": "2026-08-14T06:58:06.779Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-434bee84-6202-18f4-94a0-8d65b4b9b174-owner",
+  "branchName": "job/WF-434bee84-6202-18f4-94a0-8d65b4b9b174-owner",
+  "worktreeCreatedAt": "2026-08-14T06:58:08.507Z",
+  "executionId": "a5bb2436-eec9-477f-adf4-16bbe6fd821a",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-14T06:58:08.966Z",
+  "finishedAt": "2026-08-14T06:59:11.754Z",
+  "exitCode": 0
+}

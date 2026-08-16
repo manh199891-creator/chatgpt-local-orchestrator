@@ -6,8 +6,8 @@ export const ALL_JOB_STATES = Object.values(JobStatus) as JobStatus[];
 export const getAllowedTransitions = (s:JobStatus):JobStatus[] => [...(rules[s] ?? [])];
 export const canTransitionJob = (from:JobStatus,to:JobStatus):boolean => from!==to && getAllowedTransitions(from).includes(to);
 export const isTerminalJobState = (s:JobStatus):boolean => TERMINAL_JOB_STATES.has(s);
-export interface JobProjectCommand { id:string; executable:string; args:string[]; timeoutSeconds:number; }
-export interface JobProjectVerification { verifiedAt:string; configuredPath:string; canonicalPath:string; gitRoot:string; branch:string; headCommit:string; clean:true; commandsValid:true; originUrl?:string; }
+export interface JobProjectCommand { id:string; executable:string; args:string[]; timeoutSeconds:number; agentTypes?: ("CODEX"|"ANTIGRAVITY")[]; verificationCheck?: "build"|"typecheck"|"tests"; promptTransport?: "AGY_PRINT"; }
+export interface JobProjectVerification { verifiedAt:string; configuredPath:string; canonicalPath:string; gitRoot:string; branch:string; headCommit:string; clean:boolean; commandsValid:boolean; originUrl?:string; }
 export interface JobProjectBinding { schemaVersion:1; projectId:string; displayName:string; repositoryPath:string; defaultBranch:string; commands:JobProjectCommand[]; projectCreatedAt:string; projectUpdatedAt:string; boundAt:string; verification?:JobProjectVerification; }
 import type {AgentType} from "./runtime/AgentType.js";
 export const ExecutionStatus = { NOT_STARTED:"NOT_STARTED", STARTING:"STARTING", RUNNING:"RUNNING", COMPLETED:"COMPLETED", FAILED:"FAILED", CANCELLED:"CANCELLED" } as const;

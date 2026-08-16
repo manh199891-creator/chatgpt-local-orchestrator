@@ -8,7 +8,7 @@ import {
   saveCurrentProjectId,
   clearCurrentProjectId,
 } from "../dist/storage/token-storage.js";
-import { validateCommandsJsonInput, formatDuration, isExecutionErrorRetryable } from "../dist/side-panel.js";
+import { validateCommandsJsonInput, formatProjectCommandsJson, formatDuration, isExecutionErrorRetryable } from "../dist/side-panel.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +38,19 @@ assert(fs.existsSync(bcJsPath), "dist/bridge/bridge-client.js must exist after b
 assert(fs.existsSync(beJsPath), "dist/bridge/bridge-errors.js must exist after build");
 assert(fs.existsSync(tsJsPath), "dist/storage/token-storage.js must exist after build");
 
+function executableJsFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const file = path.join(directory, entry.name);
+    return entry.isDirectory() ? executableJsFiles(file) : entry.isFile() && entry.name.endsWith(".js") ? [file] : [];
+  });
+}
+
+for (const file of executableJsFiles(path.join(extensionRoot, "dist"))) {
+  const code = fs.readFileSync(file, "utf8");
+  assert(!code.includes("@local-orchestrator/contracts"), `${path.relative(extensionRoot, file)} must not contain an unresolved contracts workspace import`);
+  assert(!code.includes("@local-orchestrator/orchestrator"), `${path.relative(extensionRoot, file)} must not contain an unresolved orchestrator workspace import`);
+}
+
 // 2. manifest.json validations
 const manifestPath = path.join(extensionRoot, "manifest.json");
 assert(fs.existsSync(manifestPath), "manifest.json must exist");
@@ -54,10 +67,12 @@ if (fs.existsSync(manifestPath)) {
     "permissions must include storage"
   );
 
-  const forbiddenPermissions = ["<all_urls>", "tabs", "scripting", "activeTab", "webRequest", "nativeMessaging", "cookies", "clipboardRead", "clipboardWrite"];
+  const forbiddenPermissions = ["<all_urls>", "tabs", "activeTab", "webRequest", "nativeMessaging", "cookies", "clipboardRead", "clipboardWrite", "debugger", "history"];
   for (const fp of forbiddenPermissions) {
     assert(!manifest.permissions.includes(fp), `permissions must not contain forbidden permission: ${fp}`);
   }
+  assert(manifest.permissions.includes("scripting"), "permissions must include scripting for exact trusted ChatGPT content-script recovery");
+  assert(manifest.permissions.includes("alarms"), "permissions must include alarms for durable MV3 supervisor recovery");
 
   assert(
     manifest.side_panel?.default_path === "sidepanel.html",
@@ -74,9 +89,10 @@ if (fs.existsSync(manifestPath)) {
 
   const hostPermissions = manifest.host_permissions || [];
   assert(
-    hostPermissions.length === 1 && hostPermissions[0] === "http://127.0.0.1:43120/*",
-    "host_permissions must strictly contain http://127.0.0.1:43120/*"
+    hostPermissions.length === 2 && hostPermissions.includes("http://127.0.0.1:43120/*") && hostPermissions.includes("https://chatgpt.com/*"),
+    "host_permissions must be limited to Local Bridge and ChatGPT Web"
   );
+  assert(manifest.content_scripts?.length === 1 && manifest.content_scripts[0].matches?.length === 1 && manifest.content_scripts[0].matches[0] === "https://chatgpt.com/*" && manifest.content_scripts[0].js?.[0] === "dist/chatgpt-content.js", "ChatGPT content script must be narrowly scoped to https://chatgpt.com/*");
 }
 
 // 3. sidepanel.html validations
@@ -2090,6 +2106,17 @@ async function runBridgeClientTests() {
     assert(isExecutionErrorRetryable("JOB_ALREADY_RUNNING") === false, "81e. JOB_ALREADY_RUNNING is not retryable");
   });
 
+  // Test 82: durable Project Registry command hydration
+  await testCase("Project editor preserves durable AGY_PRINT command JSON without stale defaults", () => {
+    const command = { id: "antigravity-agent", executable: "agy.exe", args: ["--mode", "accept-edits"], timeoutSeconds: 1800, agentTypes: ["ANTIGRAVITY"], promptTransport: "AGY_PRINT" };
+    const hydrated = formatProjectCommandsJson([command]);
+    const parsed = validateCommandsJsonInput(hydrated);
+    assert(hydrated.includes('"executable": "agy.exe"'), "82a. hydrated Commands JSON must contain agy.exe");
+    assert(hydrated.includes('"promptTransport": "AGY_PRINT"'), "82b. hydrated Commands JSON must contain AGY_PRINT");
+    assert(!hydrated.includes("cli.js"), "82c. hydration must not inject the stale legacy default");
+    assert(parsed.valid && parsed.commands?.[0]?.promptTransport === "AGY_PRINT", "82d. saved AGY_PRINT JSON must round-trip through editor validation");
+  });
+
   console.log(`Bridge Client Tests Passed: ${bridgePassCount}/${bridgeTestCount}`);
 }
 
@@ -2106,4 +2133,3 @@ if (errors.length > 0) {
   console.log("Extension Smoke Test PASSED! All assertions succeeded.");
   process.exit(0);
 }
-

@@ -1,0 +1,64 @@
+{
+  "displayName": "RevitAddinSolution",
+  "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+  "defaultBranch": "main",
+  "commands": [
+    {
+      "id": "codex-agent",
+      "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+      "args": [
+        "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+        "exec",
+        "-"
+      ],
+      "timeoutSeconds": 1800,
+      "agentTypes": [
+        "CODEX"
+      ]
+    },
+    {
+      "id": "antigravity-agent",
+      "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+      "args": [
+        "--mode",
+        "accept-edits",
+        "--model",
+        "gemini-3.6-flash-high",
+        "--dangerously-skip-permissions",
+        "--output-format",
+        "text",
+        "--print-timeout",
+        "120s"
+      ],
+      "timeoutSeconds": 1800,
+      "agentTypes": [
+        "ANTIGRAVITY"
+      ],
+      "promptTransport": "AGY_PRINT"
+    },
+    {
+      "id": "build",
+      "executable": "dotnet.exe",
+      "args": [
+        "build",
+        "Antigravity.sln"
+      ],
+      "timeoutSeconds": 1800,
+      "verificationCheck": "build"
+    },
+    {
+      "id": "tests",
+      "executable": "dotnet.exe",
+      "args": [
+        "test",
+        "Antigravity.sln"
+      ],
+      "timeoutSeconds": 1800,
+      "verificationCheck": "tests"
+    }
+  ],
+  "projectId": "revit-addin-solution",
+  "schemaVersion": 1,
+  "createdAt": "2026-08-11T07:52:25.691Z",
+  "updatedAt": "2026-08-12T03:56:59.228Z"
+}

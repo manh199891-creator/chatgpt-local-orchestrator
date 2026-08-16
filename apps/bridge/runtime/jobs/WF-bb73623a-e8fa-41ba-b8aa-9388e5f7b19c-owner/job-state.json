@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-bb73623a-e8fa-41ba-b8aa-9388e5f7b19c-owner",
+  "planId": "WF-bb73623a-e8fa-41ba-b8aa-9388e5f7b19c",
+  "projectId": "revit-addin-solution",
+  "state": "DRAFT",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-12T10:15:44.176Z",
+  "updatedAt": "2026-08-12T10:15:46.653Z",
+  "lastEventSequence": 2,
+  "metadata": {
+    "workflowId": "WF-bb73623a-e8fa-41ba-b8aa-9388e5f7b19c",
+    "workflowOwner": true
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-12T10:15:44.176Z",
+    "projectUpdatedAt": "2026-08-12T10:15:44.176Z",
+    "boundAt": "2026-08-12T10:15:44.176Z",
+    "verification": {
+      "verifiedAt": "2026-08-12T10:15:44.175Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-bb73623a-e8fa-41ba-b8aa-9388e5f7b19c-owner",
+  "branchName": "job/WF-bb73623a-e8fa-41ba-b8aa-9388e5f7b19c-owner",
+  "worktreeCreatedAt": "2026-08-12T10:15:46.652Z"
+}

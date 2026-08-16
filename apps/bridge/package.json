@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",
+    "predev": "pnpm --filter @local-orchestrator/contracts build && pnpm --filter @local-orchestrator/projects build && pnpm --filter @local-orchestrator/orchestrator build",
     "dev": "tsx src/index.ts"
   },
   "dependencies": {

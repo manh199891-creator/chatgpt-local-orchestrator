@@ -1,0 +1,7 @@
+import type { ReviewPackage, ReviewPackageIssue, ReviewPackageRepairSummary, ReviewPackageVerification } from "./review/ReviewPackage.js";
+export const WORKFLOW_RESULT_VERSION = 1 as const;
+export type WorkflowResultStatus = "COMPLETED" | "FAILED" | "CANCELLED" | "INTERRUPTED";
+export interface WorkflowResultTask { taskId: string; agentType: "CODEX" | "ANTIGRAVITY"; status: string; reviewState: "AVAILABLE" | "MISSING"; packageStatus?: ReviewPackage["status"]; verification?: ReviewPackageVerification; issues: ReviewPackageIssue[]; repair?: ReviewPackageRepairSummary; changedFiles: string[]; }
+export interface WorkflowResultPackage { resultVersion: 1; workflowId: string; projectId: string; goal: string; status: WorkflowResultStatus; tasks: WorkflowResultTask[]; createdAt: string; updatedAt: string; }
+const relative=(v:string)=>!/^[A-Za-z]:[\\/]/.test(v)&&!v.startsWith("/")&&!v.startsWith("\\")&&!v.includes("..");
+export function validateWorkflowResultPackage(value:unknown):value is WorkflowResultPackage {const x=value as WorkflowResultPackage;return !!x&&x.resultVersion===1&&typeof x.workflowId==="string"&&typeof x.projectId==="string"&&["COMPLETED","FAILED","CANCELLED","INTERRUPTED"].includes(x.status)&&Array.isArray(x.tasks)&&x.tasks.every(t=>typeof t.taskId==="string"&&(t.agentType==="CODEX"||t.agentType==="ANTIGRAVITY")&&(t.reviewState==="AVAILABLE"||t.reviewState==="MISSING")&&t.changedFiles.every(relative));}

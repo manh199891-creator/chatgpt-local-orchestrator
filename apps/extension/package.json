@@ -4,11 +4,27 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json --noEmit && node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node scripts/smoke-test.js"
+    "test": "node scripts/smoke-test.js && node scripts/paste-to-run-test.js && node scripts/chatgpt-capture-test.js && node scripts/content-script-bundle-test.js && node scripts/content-script-recovery-test.js && node scripts/content-script-result-delivery-test.js && node scripts/result-return-test.js && node scripts/browser-supervisor-test.js && node scripts/supervision-registration-test.js && node scripts/scenario-d-outage-test.js && node scripts/workflow-submission-test.js && node scripts/project-hydration-test.js",
+    "test:workflow-handoff": "node scripts/workflow-handoff-test.js",
+    "test:workflow-result-handoff": "node scripts/workflow-result-handoff-test.js",
+    "test:paste-to-run": "node scripts/paste-to-run-test.js",
+    "test:chatgpt-capture": "node scripts/chatgpt-capture-test.js",
+    "test:content-script-bundle": "node scripts/content-script-bundle-test.js",
+    "test:content-script-recovery": "node scripts/content-script-recovery-test.js",
+    "test:content-script-result-delivery": "node scripts/content-script-result-delivery-test.js",
+    "test:result-return": "node scripts/result-return-test.js",
+    "test:browser-supervisor": "node scripts/browser-supervisor-test.js",
+    "test:supervision-registration": "node scripts/supervision-registration-test.js",
+    "test:scenario-d-outage": "node scripts/scenario-d-outage-test.js",
+    "test:workflow-submission": "node scripts/workflow-submission-test.js",
+    "test:project-hydration": "node scripts/project-hydration-test.js"
   },
   "dependencies": {
     "@local-orchestrator/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "0.21.5"
   }
 }

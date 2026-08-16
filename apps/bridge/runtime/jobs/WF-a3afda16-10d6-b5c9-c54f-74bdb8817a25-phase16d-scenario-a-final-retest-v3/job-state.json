@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-a3afda16-10d6-b5c9-c54f-74bdb8817a25-phase16d-scenario-a-final-retest-v3",
+  "planId": "WF-a3afda16-10d6-b5c9-c54f-74bdb8817a25",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-14T06:51:18.232Z",
+  "updatedAt": "2026-08-14T06:52:08.616Z",
+  "lastEventSequence": 24,
+  "metadata": {
+    "workflowId": "WF-a3afda16-10d6-b5c9-c54f-74bdb8817a25",
+    "workflowGoal": "Phase 16D Manual Acceptance Scenario A final retest v3: verify durable SUPERVISION_REGISTERED acknowledgement, side-panel independence, automatic canonical result submission exactly once, and confirm that no legacy terminal workflow result is replayed during recovery.",
+    "workflowTaskId": "phase16d-scenario-a-final-retest-v3",
+    "workflowInstruction": "Wait approximately 25 seconds before making the requested change so there is enough time to observe the durable SUPERVISION_REGISTERED acknowledgement and close the Extension side panel while the workflow remains active. Then create phase16d-scenario-a-final-retest-v3.txt at the workflow-owned worktree repository root with the exact text: PHASE 16D SCENARIO A FINAL RETEST V3 PASS. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16d-scenario-a-final-retest-v3.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-14T06:51:16.649Z",
+    "projectUpdatedAt": "2026-08-14T06:51:16.649Z",
+    "boundAt": "2026-08-14T06:51:16.649Z",
+    "verification": {
+      "verifiedAt": "2026-08-14T06:51:16.648Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-a3afda16-10d6-b5c9-c54f-74bdb8817a25-owner",
+  "branchName": "job/WF-a3afda16-10d6-b5c9-c54f-74bdb8817a25-owner",
+  "worktreeCreatedAt": "2026-08-14T06:51:18.214Z",
+  "executionId": "5338442f-87e6-4025-af1b-cb191bb4bb5f",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-14T06:51:18.680Z",
+  "finishedAt": "2026-08-14T06:52:08.240Z",
+  "exitCode": 0
+}

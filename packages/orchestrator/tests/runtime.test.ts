@@ -4,7 +4,7 @@ import {AgentFactory,AgentType,CodexRunner,AntigravityRunner,UnsupportedAgentErr
 
 const dirs:string[]=[];
 
-function makeJob(cwd:string,args:string[],agentType:AgentType=AgentType.CODEX):JobRecord {
+function makeJob(cwd:string,args:string[],agentType:AgentType=AgentType.CODEX,promptTransport?:"AGY_PRINT"):JobRecord {
   return {
     schemaVersion:'1.0',
     jobId:'JOB-runtime',
@@ -25,7 +25,7 @@ function makeJob(cwd:string,args:string[],agentType:AgentType=AgentType.CODEX):J
       displayName:'Runtime',
       repositoryPath:cwd,
       defaultBranch:'main',
-      commands:[{id:'cmd',executable:process.execPath,args,timeoutSeconds:30}],
+      commands:[{id:'cmd',executable:process.execPath,args,timeoutSeconds:30,...(promptTransport?{promptTransport}:{})}],
       projectCreatedAt:new Date().toISOString(),
       projectUpdatedAt:new Date().toISOString(),
       boundAt:new Date().toISOString(),
@@ -68,6 +68,16 @@ describe('agent runtime — regression (Phase 8A)', ()=>{
 // ---------------------------------------------------------------------------
 
 describe('AntigravityRunner — unit', ()=>{
+  it('uses AGY print arguments with the trusted worktree and does not duplicate the prompt on stdin', async()=>{
+    const cwd=await mkdtemp(join(tmpdir(),'agy-'));dirs.push(cwd);let captured:any;
+    const processes={start:(executable:string,args:string[],processCwd:string,_onOutput:any,input?:string)=>{captured={executable,args,cwd:processCwd,input};const done=Promise.resolve({exitCode:0,signal:null});return{id:'agy-capture',done,kill:()=>true}}};
+    const job=makeJob(cwd,['--mode','accept-edits','--model','gemini-3.6-flash-high','--dangerously-skip-permissions','--output-format','text','--print-timeout','120s'],AgentType.ANTIGRAVITY,'AGY_PRINT');
+    const handle=await new AntigravityRunner(processes as any).run(job);await handle.completion;
+    expect(captured.executable).toBe(process.execPath);expect(captured.cwd).toBe(cwd);expect(captured.input).toBeUndefined();expect(captured.args.slice(-4,-2)).toEqual(['--add-dir',cwd]);expect(captured.args.at(-2)).toBe('--print');expect(captured.args.at(-1)).toBe(handle.prompt?.prompt);expect(captured.args.at(-1)).toContain(job.jobId);
+  });
+
+  it('uses the same AGY argument transport for repair prompts',async()=>{const cwd=await mkdtemp(join(tmpdir(),'agy-repair-'));dirs.push(cwd);let captured:any;const processes={start:(_e:string,args:string[],_c:string,_o:any,input?:string)=>{captured={args,input};const done=Promise.resolve({exitCode:0,signal:null});return{id:'agy-repair',done,kill:()=>true}}};const job=makeJob(cwd,[],AgentType.ANTIGRAVITY,'AGY_PRINT');job.metadata={repair:{attemptNumber:1,issues:[{code:'REQUIRED_ARTIFACT_MISSING',message:'artifact missing'}]}};const handle=await new AntigravityRunner(processes as any).run(job);await handle.completion;expect(captured.input).toBeUndefined();expect(captured.args.at(-2)).toBe('--print');expect(captured.args.at(-1)).toBe(handle.prompt?.prompt);expect(captured.args.at(-1)).toContain('REQUIRED_ARTIFACT_MISSING')});
+
   it('supports ANTIGRAVITY and only ANTIGRAVITY', ()=>{
     const runner = new AntigravityRunner();
     expect(runner.supports(AgentType.ANTIGRAVITY)).toBe(true);
@@ -121,7 +131,7 @@ describe('AntigravityRunner — unit', ()=>{
     const cwd = await mkdtemp(join(tmpdir(),'anti-'));
     dirs.push(cwd);
     const collected:{stream:string;text:string}[] = [];
-    const job = makeJob(cwd,['-e','process.stdout.write("out");process.stderr.write("err")'],AgentType.ANTIGRAVITY);
+    const job = makeJob(cwd,['-e','process.stdout.write("out");process.stderr.write("err")','--'],AgentType.ANTIGRAVITY,'AGY_PRINT');
     const handle = await new AntigravityRunner().run(job,(stream,text)=>{collected.push({stream,text})});
     await handle.completion;
     const stdoutChunks = collected.filter(c=>c.stream==='stdout').map(c=>c.text).join('');
@@ -133,7 +143,7 @@ describe('AntigravityRunner — unit', ()=>{
   it('terminate() kills an in-flight AntigravityRunner process', async ()=>{
     const cwd = await mkdtemp(join(tmpdir(),'anti-'));
     dirs.push(cwd);
-    const job = makeJob(cwd,['-e','setInterval(()=>{},1000)'],AgentType.ANTIGRAVITY);
+    const job = makeJob(cwd,['-e','setInterval(()=>{},1000)','--'],AgentType.ANTIGRAVITY,'AGY_PRINT');
     const handle = await new AntigravityRunner().run(job);
     expect(handle.terminate()).toBe(true);
     const result = await handle.completion;
@@ -144,7 +154,7 @@ describe('AntigravityRunner — unit', ()=>{
   it('run returns non-zero exit code when process fails', async ()=>{
     const cwd = await mkdtemp(join(tmpdir(),'anti-'));
     dirs.push(cwd);
-    const job = makeJob(cwd,['-e','process.exit(42)'],AgentType.ANTIGRAVITY);
+    const job = makeJob(cwd,['-e','process.exit(42)','--'],AgentType.ANTIGRAVITY,'AGY_PRINT');
     const handle = await new AntigravityRunner().run(job);
     const result = await handle.completion;
     expect(result.exitCode).toBe(42);

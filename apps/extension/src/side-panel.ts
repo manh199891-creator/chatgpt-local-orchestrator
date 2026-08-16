@@ -1,4 +1,15 @@
 import { BridgeClient } from "./bridge/bridge-client.js";
+import { importWorkflowHandoff, previewWorkflow } from "./workflow-handoff.js";
+import { encodeWorkflowResultHandoff } from "./workflow-result-handoff.js";
+import { PasteToRunController } from "./paste-to-run.js";
+import { decideCapturedWorkflowImport, extractWorkflowHandoffFromAssistantText, type CapturedWorkflow } from "./chatgpt-capture.js";
+import { RESULT_RETURN_REQUEST_TYPE } from "./result-return.js";
+import { SUPERVISOR_DIAGNOSTIC_OUTAGE_CHANGED, SUPERVISOR_HEALTH } from "./browser-supervisor.js";
+import { SUPERVISOR_REGISTER, type SupervisionRegistrationResponse } from "./supervision-registration.js";
+import { formatSupervisionRegistrationGate, requestSupervisionRegistration, type SupervisionRegistrationGate } from "./supervision-registration-gate.js";
+import { submitWorkflowWithReconciliation, type WorkflowSubmissionStage } from "./workflow-submission.js";
+import { decideProjectHydration } from "./project-hydration.js";
+import type { WorkflowPlan } from "@local-orchestrator/contracts";
 import { formatBridgeError, BridgeError } from "./bridge/bridge-errors.js";
 import {
   loadBridgeToken,
@@ -10,6 +21,25 @@ import {
   loadCurrentProjectId,
   saveCurrentProjectId,
   clearCurrentProjectId,
+  loadProjectEditorDraft,
+  saveProjectEditorDraft,
+  clearProjectEditorDraft,
+  type ProjectEditorDraft,
+  loadPasteToRunEnabled,
+  savePasteToRunEnabled,
+  CHATGPT_PENDING_CAPTURE_KEY,
+  clearPendingChatGptCapture,
+  loadChatGptCaptureEnabled,
+  loadPendingChatGptCapture,
+  saveChatGptCaptureEnabled,
+  loadAutoResultReturnEnabled,
+  saveAutoResultReturnEnabled,
+  loadBrowserSupervisorEnabled,
+  saveBrowserSupervisorEnabled,
+  loadBrowserSupervisorSimulatedBridgeOutage,
+  saveBrowserSupervisorSimulatedBridgeOutage,
+  saveWorkflowSubmissionDiagnostic,
+  BROWSER_SUPERVISOR_HEALTH_KEY,
 } from "./storage/token-storage.js";
 import {
   JobRecord,
@@ -56,8 +86,16 @@ export function validateCommandsJsonInput(raw: string): { valid: boolean; comman
     if (typeof c.timeoutSeconds !== "number" || !Number.isInteger(c.timeoutSeconds)) {
       return { valid: false, error: "Command item timeoutSeconds must be an integer." };
     }
+    if (c.agentTypes !== undefined && (!Array.isArray(c.agentTypes) || c.agentTypes.length < 1 || c.agentTypes.length > 2 || new Set(c.agentTypes).size !== c.agentTypes.length || c.agentTypes.some((agent: unknown) => agent !== "CODEX" && agent !== "ANTIGRAVITY"))) return { valid: false, error: "Command item agentTypes is invalid." };
+    if (c.verificationCheck !== undefined && c.verificationCheck !== "build" && c.verificationCheck !== "typecheck" && c.verificationCheck !== "tests") return { valid: false, error: "Command item verificationCheck is unsupported." };
+    if (c.promptTransport !== undefined && c.promptTransport !== "AGY_PRINT") return { valid: false, error: "Command item promptTransport is unsupported." };
+    if (c.promptTransport === "AGY_PRINT" && (!Array.isArray(c.agentTypes) || c.agentTypes.length !== 1 || c.agentTypes[0] !== "ANTIGRAVITY" || c.args.some((arg: string) => ["--add-dir", "--print", "-p", "--prompt", "--prompt-interactive", "-i"].some(flag => arg === flag || arg.startsWith(`${flag}=`))))) return { valid: false, error: "AGY_PRINT requires one ANTIGRAVITY command and reserves prompt/worktree arguments." };
   }
   return { valid: true, commands: parsed as ProjectCommandDefinition[] };
+}
+
+export function formatProjectCommandsJson(commands: ProjectCommandDefinition[]): string {
+  return JSON.stringify(commands, null, 2);
 }
 
 if (typeof document !== "undefined") {
@@ -101,6 +139,76 @@ export function isExecutionErrorRetryable(code: string): boolean {
 
 export function initSidePanel(): void {
   const bridgeClient = new BridgeClient();
+  let incomingWorkflow: WorkflowPlan | null = null;
+  let submittedWorkflowId: string | null = null;
+  let workflowPoll: ReturnType<typeof setInterval> | null = null;
+  const workflowInput = document.getElementById("workflow-handoff-input") as HTMLTextAreaElement | null;
+  const workflowPreview = document.getElementById("workflow-preview") as HTMLElement | null;
+  const workflowStatus = document.getElementById("workflow-status") as HTMLElement | null;
+  const supervisionRegistrationStatus = document.getElementById("supervision-registration-status") as HTMLElement | null;
+  const runWorkflow = document.getElementById("btn-run-workflow") as HTMLButtonElement | null;
+  const cancelWorkflow = document.getElementById("btn-cancel-workflow") as HTMLButtonElement | null;
+  const pasteToRunToggle = document.getElementById("paste-to-run-enabled") as HTMLInputElement | null;
+  const chatGptCaptureToggle = document.getElementById("chatgpt-capture-enabled") as HTMLInputElement | null;
+  const chatGptCaptureStatus = document.getElementById("chatgpt-capture-status") as HTMLElement | null;
+  const loadChatGptCaptureButton = document.getElementById("btn-load-chatgpt-capture") as HTMLButtonElement | null;
+  let pendingChatGptCapture: CapturedWorkflow | null = null;
+  let reviewedChatGptCapture: CapturedWorkflow | null = null;
+  const autoResultReturnToggle=document.getElementById("auto-result-return-enabled") as HTMLInputElement|null;
+  const autoResultReturnStatus=document.getElementById("auto-result-return-status") as HTMLElement|null;
+  let browserSupervisorEnabled=false;
+  let browserSupervisorSimulatedOutage=false;
+  let workflowSubmissionKey:string|null=null;
+  const terminalWorkflow = new Set(["COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED"]);
+  let workflowResult: any = null;
+  const workflowResultSummary=document.getElementById("workflow-result-summary") as HTMLElement|null, prepareWorkflowResult=document.getElementById("btn-prepare-workflow-result") as HTMLButtonElement|null;
+  const renderAutoReturn=(value:string)=>{if(autoResultReturnStatus)autoResultReturnStatus.textContent=`Automatic ChatGPT return: ${value}`};
+  const requestAutoResultReturn=async(value:any)=>{if(!autoResultReturnToggle?.checked){renderAutoReturn("Disabled");return}if(browserSupervisorEnabled){renderAutoReturn("Browser Supervisor owns delivery");return}const payload=encodeWorkflowResultHandoff(value);renderAutoReturn("Sending to ChatGPT");try{const response=await chrome.runtime.sendMessage({type:RESULT_RETURN_REQUEST_TYPE,payload}) as {status?:string;reason?:string};if(response.status==="DELIVERED"||response.status==="DUPLICATE")renderAutoReturn("Sent to ChatGPT");else if(response.status==="UNBOUND")renderAutoReturn("Manual workflow — no trusted ChatGPT source");else if(response.status==="DISABLED")renderAutoReturn("Disabled");else renderAutoReturn(`Pending — ${response.reason??response.status??"failed safely"}`)}catch{renderAutoReturn("Pending — content script or source tab unavailable")}};
+  const renderWorkflowResult=(value:any)=>{workflowResult=value;if(workflowResultSummary)workflowResultSummary.textContent=`${value.status} — ${value.projectId}\n${value.goal}\n${value.tasks.map((t:any)=>`${t.taskId} (${t.agentType}) ${t.status} / ${t.reviewState}; files: ${t.changedFiles.join(", ")||"none"}`).join("\n")}`;if(prepareWorkflowResult)prepareWorkflowResult.disabled=false;void requestAutoResultReturn(value);};
+  prepareWorkflowResult?.addEventListener("click",async()=>{if(!workflowResult)return;const text=encodeWorkflowResultHandoff(workflowResult);if(!navigator.clipboard?.writeText){renderWorkflow("Clipboard is unavailable; copy the prepared result manually.");return;}await navigator.clipboard.writeText(text);renderWorkflow("Result prepared for manual ChatGPT review.");});
+  const renderWorkflow = (status: string | { message: string }) => { if (workflowStatus) workflowStatus.textContent = typeof status === "string" ? status : status.message; };
+  const renderSupervisionRegistration = (value:SupervisionRegistrationGate) => { if(supervisionRegistrationStatus)supervisionRegistrationStatus.textContent=formatSupervisionRegistrationGate(value); };
+  const renderCaptureStatus = (status: string) => { if (chatGptCaptureStatus) chatGptCaptureStatus.textContent = status; };
+  const hideCaptureLoad = () => { if (loadChatGptCaptureButton) { loadChatGptCaptureButton.disabled = true; loadChatGptCaptureButton.classList.add("hidden"); } };
+  const loadCaptureIntoEditor = (capture: CapturedWorkflow) => {
+    if (!workflowInput) return;
+    workflowInput.value = capture.payload;
+    incomingWorkflow = null;
+    workflowSubmissionKey = null;
+    if (runWorkflow) runWorkflow.disabled = true;
+    if (workflowPreview) workflowPreview.textContent = "Captured from ChatGPT. Click Review Plan to validate and preview.";
+    renderCaptureStatus(`Captured from ChatGPT at ${new Date(capture.capturedAt).toLocaleString()}.`);
+    hideCaptureLoad();
+  };
+  const reconcileCapturedWorkflow = async (capture: CapturedWorkflow | null) => {
+    pendingChatGptCapture = capture;
+    const decision = decideCapturedWorkflowImport(workflowInput?.value ?? "", capture);
+    if (decision.state === "EMPTY") { hideCaptureLoad(); return; }
+    if (decision.state === "AUTO_LOAD") { loadCaptureIntoEditor(capture!); return; }
+    if (decision.state === "DUPLICATE") { hideCaptureLoad(); renderCaptureStatus("Captured ChatGPT workflow is already loaded. Click Review Plan to preserve its source binding."); return; }
+    renderCaptureStatus("A new ChatGPT workflow was captured and is pending. Existing editor content was not replaced.");
+    if (loadChatGptCaptureButton) { loadChatGptCaptureButton.disabled = false; loadChatGptCaptureButton.classList.remove("hidden"); }
+  };
+  const stopWorkflowPoll = () => { if (workflowPoll) clearInterval(workflowPoll); workflowPoll = null; };
+  const refreshWorkflow = async () => { if (!submittedWorkflowId || !currentToken) return; try { const value = await bridgeClient.getWorkflow(submittedWorkflowId, currentToken); renderWorkflow(`${value.workflowId}: ${value.status}\n${value.tasks.map(task => `${task.agentType} ${task.taskId}: ${task.status}`).join("\n")}`); if (terminalWorkflow.has(value.status)) { stopWorkflowPoll(); if (cancelWorkflow) cancelWorkflow.disabled = true; renderWorkflowResult(await bridgeClient.getWorkflowResultPackage(submittedWorkflowId,currentToken)); } } catch (error) { renderWorkflow(formatBridgeError(error)); stopWorkflowPoll(); } };
+  const supervisorToggle=document.getElementById("browser-supervisor-enabled") as HTMLInputElement|null,supervisorStatus=document.getElementById("browser-supervisor-status") as HTMLElement|null,supervisorOutageToggle=document.getElementById("browser-supervisor-simulated-outage") as HTMLInputElement|null,supervisorOutageStatus=document.getElementById("browser-supervisor-simulated-outage-status") as HTMLElement|null;
+  const renderSupervisorOutage=()=>{if(supervisorOutageStatus)supervisorOutageStatus.textContent=`Simulated Bridge outage: ${browserSupervisorSimulatedOutage?"ON":"OFF"}`};
+  const renderSupervisor=async()=>{if(!supervisorStatus)return;const health=await chrome.runtime.sendMessage({type:SUPERVISOR_HEALTH}) as any;if(!health){supervisorStatus.textContent="Supervisor: OFF";return}supervisorStatus.textContent=`Supervisor: ${health.enabled?"ON":"OFF"}\nBridge: ${health.bridgeReachable?"CONNECTED":"WAITING_BRIDGE"}\nSource: ${health.sourceTabConnected?"CONNECTED":"WAITING"}\nContent script: ${health.contentScriptReady?"READY":"RECOVERING"}\nActive workflows: ${health.activeSupervisedWorkflows}; queued: ${health.queuedBrowserJobs}; leased: ${health.leasedBrowserJobs}\nLast tick: ${health.lastSupervisorTick??"not yet"}${health.lastFailure?`\nLast error: ${health.lastFailure}`:""}`};
+  const recordSubmissionStage=(submissionKey:string,projectId:string)=>(stage:WorkflowSubmissionStage,workflowId?:string,lastError?:string)=>saveWorkflowSubmissionDiagnostic({submissionKey,stage,projectId,workflowId,lastError:lastError?.slice(0,128),observedAt:new Date().toISOString()});
+  const trackSubmittedWorkflow = async (value: {workflowId:string;status:string;projectId?:string},submissionKey?:string,recordStage?:ReturnType<typeof recordSubmissionStage>) => { submittedWorkflowId=value.workflowId;if(reviewedChatGptCapture){const capture=reviewedChatGptCapture;await recordStage?.("REGISTRATION_REQUESTED",value.workflowId);const response=await requestSupervisionRegistration(value.workflowId,()=>chrome.runtime.sendMessage({type:SUPERVISOR_REGISTER,workflowId:value.workflowId,projectId:value.projectId??incomingWorkflow?.projectId??"",captureDigest:capture.digest}) as Promise<SupervisionRegistrationResponse>,renderSupervisionRegistration);if(response?.status!=="SUPERVISION_REGISTERED")throw new Error(`Workflow ${value.workflowId} started, but durable Browser Supervisor registration failed: ${response?.error??"NO_REGISTRATION_ACK"}.`);await recordStage?.("SUPERVISION_REGISTERED",value.workflowId);await clearPendingChatGptCapture(capture.digest);reviewedChatGptCapture=null;pendingChatGptCapture=null;hideCaptureLoad()}workflowSubmissionKey=null;renderWorkflow(`${value.workflowId}: ${value.status}`);if(cancelWorkflow)cancelWorkflow.disabled=false;await refreshWorkflow();stopWorkflowPoll();workflowPoll=setInterval(()=>void refreshWorkflow(),5000);void renderSupervisor(); };
+  const pasteToRun = new PasteToRunController(bridgeClient,()=>currentToken,{onStatus:renderWorkflow,onValidated:workflow=>{incomingWorkflow=workflow;if(workflowPreview)workflowPreview.textContent=previewWorkflow(workflow);if(runWorkflow)runWorkflow.disabled=true;},onSubmitted:async(_workflow,value)=>trackSubmittedWorkflow(value)});
+  workflowInput?.addEventListener("paste",event=>{if(!event.isTrusted||!pasteToRun.isEnabled())return;const text=event.clipboardData?.getData("text/plain")??"";if(!text)return;const interactionId=globalThis.crypto?.randomUUID?.()??`${Date.now()}-${Math.random()}`;void pasteToRun.handleTrustedPaste(text,interactionId);});
+  pasteToRunToggle?.addEventListener("change",()=>{const enabled=pasteToRunToggle.checked;pasteToRun.setEnabled(enabled);void savePasteToRunEnabled(enabled);renderWorkflow(enabled?"Paste-to-Run enabled. Your next valid marked paste is the approval action.":"Paste-to-Run disabled. Review Plan and Run Workflow are required.");});
+  chatGptCaptureToggle?.addEventListener("change",()=>{const enabled=chatGptCaptureToggle.checked;void saveChatGptCaptureEnabled(enabled);renderCaptureStatus(enabled?"ChatGPT capture enabled. Waiting for a completed assistant handoff.":"ChatGPT capture is off.");});
+  autoResultReturnToggle?.addEventListener("change",()=>{const enabled=autoResultReturnToggle.checked;void saveAutoResultReturnEnabled(enabled);renderAutoReturn(enabled?"Waiting for terminal result":"Disabled");if(enabled&&workflowResult)void requestAutoResultReturn(workflowResult)});
+  supervisorToggle?.addEventListener("change",()=>{browserSupervisorEnabled=supervisorToggle.checked;void saveBrowserSupervisorEnabled(browserSupervisorEnabled).then(()=>chrome.runtime.sendMessage({type:SUPERVISOR_HEALTH})).then(()=>renderSupervisor())});
+  supervisorOutageToggle?.addEventListener("change",()=>{browserSupervisorSimulatedOutage=supervisorOutageToggle.checked;renderSupervisorOutage();supervisorOutageToggle.disabled=true;void saveBrowserSupervisorSimulatedBridgeOutage(browserSupervisorSimulatedOutage).then(()=>chrome.runtime.sendMessage({type:SUPERVISOR_DIAGNOSTIC_OUTAGE_CHANGED})).then(()=>renderSupervisor()).catch(async()=>{browserSupervisorSimulatedOutage=await loadBrowserSupervisorSimulatedBridgeOutage();supervisorOutageToggle.checked=browserSupervisorSimulatedOutage;renderSupervisorOutage();renderWorkflow("Simulated Bridge outage state could not be applied.")}).finally(()=>{supervisorOutageToggle.disabled=false})});
+  loadChatGptCaptureButton?.addEventListener("click",()=>{if(pendingChatGptCapture)loadCaptureIntoEditor(pendingChatGptCapture);});
+  workflowInput?.addEventListener("input",()=>{if(pendingChatGptCapture)void reconcileCapturedWorkflow(pendingChatGptCapture);});
+  if (typeof chrome !== "undefined" && chrome.storage?.onChanged) chrome.storage.onChanged.addListener((changes,area)=>{if(area!=="local")return;if(changes[CHATGPT_PENDING_CAPTURE_KEY])void loadPendingChatGptCapture().then(reconcileCapturedWorkflow);const health=changes[BROWSER_SUPERVISOR_HEALTH_KEY];if(health&&(health.oldValue as any)?.current?.bridgeReachable===false&&(health.newValue as any)?.current?.bridgeReachable===true)void handleCheckBridge(true);});
+  document.getElementById("btn-import-workflow")?.addEventListener("click", () => { const text=workflowInput?.value??"", result = importWorkflowHandoff(text); if (result.state !== "READY") { incomingWorkflow = null;workflowSubmissionKey=null; if (runWorkflow) runWorkflow.disabled = true; if (workflowPreview) workflowPreview.textContent = result.state === "INVALID" ? result.error : "No incoming workflow."; return; } incomingWorkflow = result.workflow; if (workflowPreview) workflowPreview.textContent = previewWorkflow(result.workflow); if (runWorkflow) runWorkflow.disabled = false; renderWorkflow("Preview ready. Explicit Run Workflow approval required."); const reviewed=extractWorkflowHandoffFromAssistantText(text);if(pendingChatGptCapture&&reviewed.state==="READY"&&reviewed.payload===pendingChatGptCapture.payload){reviewedChatGptCapture=pendingChatGptCapture;workflowSubmissionKey=pendingChatGptCapture.digest;hideCaptureLoad();renderCaptureStatus("Captured from ChatGPT and reviewed. Its trusted source remains durable until Run Workflow registration succeeds.");}else workflowSubmissionKey=globalThis.crypto?.randomUUID?.()??`${Date.now()}-${Math.random()}`; });
+  runWorkflow?.addEventListener("click", async () => { if (!incomingWorkflow || !currentToken) { renderWorkflow("Bridge token is required before workflow submission."); return; } runWorkflow.disabled = true; let bridgeSubmitted=false;const submissionKey=workflowSubmissionKey??(globalThis.crypto?.randomUUID?.()??`${Date.now()}-${Math.random()}`),recordStage=recordSubmissionStage(submissionKey,incomingWorkflow.projectId);workflowSubmissionKey=submissionKey;try { const submitted=await submitWorkflowWithReconciliation(bridgeClient,incomingWorkflow,currentToken,submissionKey,recordStage);bridgeSubmitted=true;await trackSubmittedWorkflow(submitted,submissionKey,recordStage); } catch (error) { renderWorkflow(error instanceof BridgeError&&error.code==="REQUEST_TIMEOUT"?"Workflow submission acknowledgement remains ambiguous after protected reconciliation. Retry is idempotent and cannot create another workflow.":formatBridgeError(error)); runWorkflow.disabled = bridgeSubmitted; } });
+  cancelWorkflow?.addEventListener("click", async () => { if (!submittedWorkflowId || !currentToken) return; try { const value = await bridgeClient.cancelWorkflow(submittedWorkflowId, currentToken); renderWorkflow(`${value.workflowId}: ${value.status}`); if (terminalWorkflow.has(value.status)) { stopWorkflowPoll(); cancelWorkflow.disabled = true; } } catch (error) { renderWorkflow(formatBridgeError(error)); } });
 
   // State in memory
   let currentToken: string | null = null;
@@ -129,6 +237,8 @@ export function initSidePanel(): void {
   let projectsList: ProjectDefinition[] = [];
   let isCreateMode = true;
   let isProjectRequestRunning = false;
+  let projectEditorDirty = false;
+  let bridgeConnected = false;
 
   // DOM Elements - Section A: Bridge Connection
   const elBridgeStatus = document.getElementById("bridge-status") as HTMLSpanElement;
@@ -312,7 +422,7 @@ export function initSidePanel(): void {
 
   // Event Listeners - Project Registry
   btnRefreshProjects.addEventListener("click", () => void handleRefreshProjects());
-  btnNewProject.addEventListener("click", handleNewProject);
+  btnNewProject.addEventListener("click", () => handleNewProject());
   btnSaveProject.addEventListener("click", () => void handleSaveProject());
   btnDeleteProject.addEventListener("click", () => void handleDeleteProject());
   btnRunPreflight.addEventListener("click", () => void handleRunPreflight());
@@ -324,6 +434,8 @@ export function initSidePanel(): void {
   });
 
   const onProjectFormInputChange = () => {
+    projectEditorDirty = true;
+    persistProjectEditorDraft();
     updateActionStates();
   };
   elProjectIdInput.addEventListener("input", onProjectFormInputChange);
@@ -360,20 +472,26 @@ export function initSidePanel(): void {
 
   async function init(): Promise<void> {
     currentToken = await loadBridgeToken();
+    browserSupervisorEnabled=await loadBrowserSupervisorEnabled();if(supervisorToggle)supervisorToggle.checked=browserSupervisorEnabled;void renderSupervisor();
+    browserSupervisorSimulatedOutage=await loadBrowserSupervisorSimulatedBridgeOutage();if(supervisorOutageToggle)supervisorOutageToggle.checked=browserSupervisorSimulatedOutage;renderSupervisorOutage();
     currentJobId = await loadCurrentJobId();
     currentProjectId = await loadCurrentProjectId();
+    const projectEditorDraft = await loadProjectEditorDraft();
+    if (projectEditorDraft) restoreProjectEditorDraft(projectEditorDraft);
+    const pasteToRunEnabled = await loadPasteToRunEnabled();
+    pasteToRun.setEnabled(pasteToRunEnabled);
+    if (pasteToRunToggle) pasteToRunToggle.checked = pasteToRunEnabled;
+    const chatGptCaptureEnabled = await loadChatGptCaptureEnabled();
+    if (chatGptCaptureToggle) chatGptCaptureToggle.checked = chatGptCaptureEnabled;
+    renderCaptureStatus(chatGptCaptureEnabled ? "ChatGPT capture enabled. Waiting for a completed assistant handoff." : "ChatGPT capture is off.");
+    await reconcileCapturedWorkflow(await loadPendingChatGptCapture());
+    const autoReturnEnabled=await loadAutoResultReturnEnabled();if(autoResultReturnToggle)autoResultReturnToggle.checked=autoReturnEnabled;renderAutoReturn(autoReturnEnabled?"Waiting for terminal result":"Disabled");
 
     updateTokenStatusUI();
     await handleCheckBridge(true);
 
-    if (currentToken) {
-      await handleRefreshProjects(true);
-    }
-
-    if (currentProjectId && currentToken) {
-      await handleSelectProject(currentProjectId, true);
-    } else {
-      handleNewProject();
+    if (!currentProjectId && !projectEditorDirty) {
+      handleNewProject(false);
     }
 
     if (currentJobId) {
@@ -388,6 +506,7 @@ export function initSidePanel(): void {
 
   async function handleCheckBridge(silentOnSuccess = false): Promise<boolean> {
     try {
+      const wasConnected=bridgeConnected;
       const health = await bridgeClient.checkHealth();
       const versionData = await bridgeClient.getVersion().catch(() => null);
 
@@ -398,6 +517,9 @@ export function initSidePanel(): void {
         ? `${versionData.version} (API v${versionData.apiVersion})`
         : health.version;
       elBridgeVersion.textContent = vStr;
+      bridgeConnected=true;
+
+      if(currentToken)await hydrateProjectsFromBridge(silentOnSuccess||wasConnected);
 
       if (!silentOnSuccess) {
         showMessage(`Connected to Local Bridge (v${health.version}).`, "success");
@@ -405,6 +527,7 @@ export function initSidePanel(): void {
       updateActionStates();
       return true;
     } catch (err: unknown) {
+      bridgeConnected=false;
       elBridgeStatus.textContent = "Not connected";
       elBridgeStatus.className = "status-value status-offline";
       elBridgeVersion.textContent = "Unknown";
@@ -431,10 +554,6 @@ export function initSidePanel(): void {
       showMessage("Bearer token saved successfully.", "success");
 
       await handleCheckBridge(true);
-      await handleRefreshProjects(true);
-      if (currentProjectId) {
-        await handleSelectProject(currentProjectId, true);
-      }
       if (currentJobId) {
         await fetchJobDetails(currentJobId);
       } else {
@@ -472,32 +591,20 @@ export function initSidePanel(): void {
 
   // --- Handlers: PROJECT REGISTRY ---
 
-  async function handleRefreshProjects(silent = false): Promise<void> {
+  async function handleRefreshProjects(silent = false, discardDraft = !silent): Promise<void> {
     if (!currentToken) return;
+
+    if (discardDraft) {
+      await clearPersistedProjectEditorDraft();
+      projectEditorDirty = false;
+    }
 
     isProjectRequestRunning = true;
     updateActionStates();
 
     try {
       const projects = await bridgeClient.listProjects(currentToken);
-      projectsList = projects;
-
-      renderProjectSelector(projects);
-
-      if (currentProjectId) {
-        const found = projects.find((p) => p.projectId === currentProjectId);
-        if (found) {
-          elProjectSelector.value = currentProjectId;
-        } else {
-          await clearCurrentProjectId();
-          currentProjectId = null;
-          currentProject = null;
-          handleNewProject();
-          if (!silent) {
-            showMessage("Current project was removed from registry.", "info");
-          }
-        }
-      }
+      await applyAuthoritativeProjectList(projects);
 
       if (!silent) {
         showMessage(`Refreshed ${projects.length} registered project(s).`, "success");
@@ -510,6 +617,29 @@ export function initSidePanel(): void {
     } finally {
       isProjectRequestRunning = false;
       updateActionStates();
+    }
+  }
+
+  async function hydrateProjectsFromBridge(silent=true):Promise<void>{
+    if(!currentToken||isProjectRequestRunning)return;
+    isProjectRequestRunning=true;updateActionStates();
+    try{
+      const projects=await bridgeClient.listProjects(currentToken);await applyAuthoritativeProjectList(projects);
+      if(!silent)showMessage(`Connected and loaded ${projects.length} registered project(s).`,"success");
+    }catch(error){if(!silent){const formatted=formatBridgeError(error);showMessage(`Project hydration failed: ${formatted.message}`,"error")}}
+    finally{isProjectRequestRunning=false;updateActionStates()}
+  }
+
+  async function applyAuthoritativeProjectList(projects:ProjectDefinition[]):Promise<void>{
+    projectsList=projects;renderProjectSelector(projects);
+    const decision=decideProjectHydration(projects,currentProjectId,projectEditorDirty);
+    if(decision.state==="RESTORE"){
+      const authoritative=await bridgeClient.getProject(decision.projectId,currentToken!);currentProject=authoritative;currentProjectId=authoritative.projectId;await saveCurrentProjectId(authoritative.projectId);populateProjectForm(authoritative);elProjectSelector.value=authoritative.projectId;isCreateMode=false;
+    }else if(decision.state==="PRESERVE_DIRTY"){
+      elProjectSelector.value=decision.projectId;
+    }else if(decision.state==="MISSING_SELECTION"){
+      await clearCurrentProjectId();currentProjectId=null;currentProject=null;elProjectSelector.value="";
+      if(decision.preserveEditor){isCreateMode=true;elProjectIdInput.readOnly=false;persistProjectEditorDraft()}else handleNewProject(false);
     }
   }
 
@@ -530,11 +660,13 @@ export function initSidePanel(): void {
   }
 
   async function handleSelectProject(projectId: string, silent = false): Promise<void> {
+    await clearPersistedProjectEditorDraft();
+    projectEditorDirty = false;
     if (!projectId) {
       await clearCurrentProjectId();
       currentProjectId = null;
       currentProject = null;
-      handleNewProject();
+      handleNewProject(false);
       return;
     }
 
@@ -570,7 +702,7 @@ export function initSidePanel(): void {
         await clearCurrentProjectId();
         currentProjectId = null;
         currentProject = null;
-        handleNewProject();
+        handleNewProject(false);
         if (!silent) {
           showMessage(`Project "${projectId}" not found. Cleared selection.`, "error");
         }
@@ -591,12 +723,56 @@ export function initSidePanel(): void {
     elProjectDisplayNameInput.value = p.displayName;
     elProjectRepoPathInput.value = p.repositoryPath;
     elProjectDefaultBranchInput.value = p.defaultBranch;
-    elProjectCommandsJsonInput.value = JSON.stringify(p.commands, null, 2);
+    elProjectCommandsJsonInput.value = formatProjectCommandsJson(p.commands);
     elProjectCreatedAt.textContent = formatDate(p.createdAt);
     elProjectUpdatedAt.textContent = formatDate(p.updatedAt);
+    projectEditorDirty = false;
   }
 
-  function handleNewProject(): void {
+  function createProjectEditorDraft(): ProjectEditorDraft {
+    return {
+      draftVersion: 1,
+      selectedProjectId: currentProjectId,
+      isCreateMode,
+      projectId: elProjectIdInput.value,
+      displayName: elProjectDisplayNameInput.value,
+      repositoryPath: elProjectRepoPathInput.value,
+      defaultBranch: elProjectDefaultBranchInput.value,
+      commandsJson: elProjectCommandsJsonInput.value,
+      dirty: true,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  let projectDraftWrite: Promise<void> = Promise.resolve();
+
+  function persistProjectEditorDraft(): void {
+    const draft = createProjectEditorDraft();
+    projectDraftWrite = projectDraftWrite.catch(() => undefined).then(() => saveProjectEditorDraft(draft));
+    void projectDraftWrite.catch(() => undefined);
+  }
+
+  async function clearPersistedProjectEditorDraft(): Promise<void> {
+    projectDraftWrite = projectDraftWrite.catch(() => undefined).then(() => clearProjectEditorDraft());
+    await projectDraftWrite;
+  }
+
+  function restoreProjectEditorDraft(draft: ProjectEditorDraft): void {
+    currentProjectId = draft.selectedProjectId;
+    isCreateMode = draft.isCreateMode;
+    elProjectIdInput.value = draft.projectId;
+    elProjectIdInput.readOnly = !draft.isCreateMode;
+    elProjectDisplayNameInput.value = draft.displayName;
+    elProjectRepoPathInput.value = draft.repositoryPath;
+    elProjectDefaultBranchInput.value = draft.defaultBranch;
+    elProjectCommandsJsonInput.value = draft.commandsJson;
+    elProjectCreatedAt.textContent = "-";
+    elProjectUpdatedAt.textContent = "-";
+    projectEditorDirty = true;
+  }
+
+  function handleNewProject(discardDraft = true): void {
+    if (discardDraft) void clearPersistedProjectEditorDraft();
     isCreateMode = true;
     currentProjectId = null;
     currentProject = null;
@@ -623,6 +799,7 @@ export function initSidePanel(): void {
     elProjectUpdatedAt.textContent = "-";
 
     clearPreflightUI();
+    projectEditorDirty = false;
     updateActionStates();
   }
 
@@ -658,15 +835,17 @@ export function initSidePanel(): void {
           commands: cmdRes.commands!,
         };
         const created = await bridgeClient.createProject(input, currentToken);
-        currentProjectId = created.projectId;
-        currentProject = created;
-        await saveCurrentProjectId(created.projectId);
+        const durable = await bridgeClient.getProject(created.projectId, currentToken);
+        currentProjectId = durable.projectId;
+        currentProject = durable;
+        await saveCurrentProjectId(durable.projectId);
 
         isCreateMode = false;
-        populateProjectForm(created);
+        await clearPersistedProjectEditorDraft();
+        populateProjectForm(durable);
         await handleRefreshProjects(true);
 
-        showMessage(`Project "${created.projectId}" registered successfully.`, "success");
+        showMessage(`Project "${durable.projectId}" registered successfully.`, "success");
       } else {
         const input = {
           displayName: dname,
@@ -675,11 +854,13 @@ export function initSidePanel(): void {
           commands: cmdRes.commands!,
         };
         const updated = await bridgeClient.updateProject(currentProjectId!, input, currentToken);
-        currentProject = updated;
-        populateProjectForm(updated);
+        const durable = await bridgeClient.getProject(updated.projectId, currentToken);
+        currentProject = durable;
+        await clearPersistedProjectEditorDraft();
+        populateProjectForm(durable);
         await handleRefreshProjects(true);
 
-        showMessage(`Project "${updated.projectId}" updated successfully.`, "success");
+        showMessage(`Project "${durable.projectId}" updated successfully.`, "success");
       }
     } catch (err: unknown) {
       const formatted = formatBridgeError(err);

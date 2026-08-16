@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-cdae9846-d52c-4777-a51b-c80ea945e25d-owner",
+  "planId": "WF-cdae9846-d52c-4777-a51b-c80ea945e25d",
+  "projectId": "revit-addin-solution",
+  "state": "DRAFT",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-11T08:10:20.324Z",
+  "updatedAt": "2026-08-11T08:10:21.406Z",
+  "lastEventSequence": 2,
+  "metadata": {
+    "workflowId": "WF-cdae9846-d52c-4777-a51b-c80ea945e25d",
+    "workflowOwner": true
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [],
+    "projectCreatedAt": "2026-08-11T08:10:20.323Z",
+    "projectUpdatedAt": "2026-08-11T08:10:20.323Z",
+    "boundAt": "2026-08-11T08:10:20.323Z",
+    "verification": {
+      "verifiedAt": "2026-08-11T08:10:20.322Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-cdae9846-d52c-4777-a51b-c80ea945e25d-owner",
+  "branchName": "job/WF-cdae9846-d52c-4777-a51b-c80ea945e25d-owner",
+  "worktreeCreatedAt": "2026-08-11T08:10:21.405Z"
+}

@@ -65,6 +65,9 @@ export interface JobProjectCommand {
   executable: string;
   args: string[];
   timeoutSeconds: number;
+  agentTypes?: ("CODEX" | "ANTIGRAVITY")[];
+  verificationCheck?: "build" | "typecheck" | "tests";
+  promptTransport?: "AGY_PRINT";
 }
 
 export interface JobProjectVerification {
@@ -221,6 +224,9 @@ export interface ProjectCommandDefinition {
   executable: string;
   args: string[];
   timeoutSeconds: number;
+  agentTypes?: ("CODEX" | "ANTIGRAVITY")[];
+  verificationCheck?: "build" | "typecheck" | "tests";
+  promptTransport?: "AGY_PRINT";
 }
 
 export interface ProjectDefinition {
@@ -289,6 +295,10 @@ export interface ProjectDeleteData {
 export interface ProjectPreflightData {
   preflight: ProjectPreflightResult;
 }
+
+export interface WorkflowTaskState { taskId: string; agentType: "CODEX" | "ANTIGRAVITY"; status: string; dependencies: string[]; }
+export interface WorkflowData { workflowId: string; status: string; projectId: string; currentTaskId?: string; tasks: WorkflowTaskState[]; }
+export interface WorkflowResultPackageData { resultVersion: 1; workflowId: string; projectId: string; goal: string; status: string; tasks: Array<{ taskId: string; agentType: string; status: string; reviewState: string; changedFiles: string[] }>; }
 
 import type {
     ReviewPackage,

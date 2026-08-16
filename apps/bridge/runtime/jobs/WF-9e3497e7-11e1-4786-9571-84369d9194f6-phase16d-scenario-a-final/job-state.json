@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-9e3497e7-11e1-4786-9571-84369d9194f6-phase16d-scenario-a-final",
+  "planId": "WF-9e3497e7-11e1-4786-9571-84369d9194f6",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-14T01:59:49.270Z",
+  "updatedAt": "2026-08-14T02:00:10.536Z",
+  "lastEventSequence": 24,
+  "metadata": {
+    "workflowId": "WF-9e3497e7-11e1-4786-9571-84369d9194f6",
+    "workflowGoal": "Phase 16D Manual Acceptance Scenario A: verify Browser Supervisor completes terminal result discovery and automatic result return while the Extension side panel is closed.",
+    "workflowTaskId": "phase16d-scenario-a-final",
+    "workflowInstruction": "Create phase16d-scenario-a-final.txt at the workflow-owned worktree repository root with the exact text: PHASE 16D SCENARIO A FINAL PASS. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16d-scenario-a-final.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-14T01:59:46.105Z",
+    "projectUpdatedAt": "2026-08-14T01:59:46.105Z",
+    "boundAt": "2026-08-14T01:59:46.105Z",
+    "verification": {
+      "verifiedAt": "2026-08-14T01:59:45.982Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-9e3497e7-11e1-4786-9571-84369d9194f6-owner",
+  "branchName": "job/WF-9e3497e7-11e1-4786-9571-84369d9194f6-owner",
+  "worktreeCreatedAt": "2026-08-14T01:59:49.215Z",
+  "executionId": "b565225c-94f4-4d75-aff0-821514255497",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-14T01:59:49.617Z",
+  "finishedAt": "2026-08-14T02:00:10.046Z",
+  "exitCode": 0
+}

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-dad52b63-0752-439b-a7f1-b6e8363f8ec9-phase16d-scenario-a-registration-retest",
+  "planId": "WF-dad52b63-0752-439b-a7f1-b6e8363f8ec9",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-14T02:36:56.284Z",
+  "updatedAt": "2026-08-14T02:37:41.937Z",
+  "lastEventSequence": 30,
+  "metadata": {
+    "workflowId": "WF-dad52b63-0752-439b-a7f1-b6e8363f8ec9",
+    "workflowGoal": "Phase 16D Manual Acceptance Scenario A registration retest: verify that after explicit Run Workflow the Browser Supervisor durably registers the workflow in the service worker, continues terminal discovery while the side panel is closed, and returns the canonical terminal result exactly once to this originating ChatGPT conversation.",
+    "workflowTaskId": "phase16d-scenario-a-registration-retest",
+    "workflowInstruction": "Create phase16d-scenario-a-registration-retest.txt at the workflow-owned worktree repository root with the exact text: PHASE 16D SCENARIO A REGISTRATION RETEST PASS. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16d-scenario-a-registration-retest.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-14T02:36:39.995Z",
+    "projectUpdatedAt": "2026-08-14T02:36:39.995Z",
+    "boundAt": "2026-08-14T02:36:39.995Z",
+    "verification": {
+      "verifiedAt": "2026-08-14T02:36:39.850Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-dad52b63-0752-439b-a7f1-b6e8363f8ec9-owner",
+  "branchName": "job/WF-dad52b63-0752-439b-a7f1-b6e8363f8ec9-owner",
+  "worktreeCreatedAt": "2026-08-14T02:36:56.214Z",
+  "executionId": "4f6fb3d9-2f3e-4509-8e2c-8f7958c862e2",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-14T02:36:58.133Z",
+  "finishedAt": "2026-08-14T02:37:40.849Z",
+  "exitCode": 0
+}

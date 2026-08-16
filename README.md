@@ -79,6 +79,11 @@ pnpm test
 pnpm dev:bridge
 ```
 
+`pnpm dev:bridge` is the reliable developer entry point. It prepares only the
+Bridge's required workspace package outputs before executing Bridge TypeScript
+source, so a preceding full monorepo build is not required after contract,
+project, or orchestrator changes.
+
 ## Bridge Health Endpoint
 When the Local Bridge is running (`pnpm dev:bridge`), verify server health via:
 ```bash

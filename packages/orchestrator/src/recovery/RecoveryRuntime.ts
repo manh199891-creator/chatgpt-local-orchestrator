@@ -7,15 +7,16 @@ import type { ReviewPackageProvider } from "../review-package/ReviewPackageProvi
 export class RecoveryRuntime {
     constructor(private readonly jobs: JobStore, private readonly states: RuntimeStateStore, private readonly packages: ReviewPackageProvider) {}
     async reconcile(): Promise<void> {
-        for (const job of await this.jobs.listJobs()) {
+        await Promise.all((await this.jobs.listJobs()).map(async job => {
             const state = await this.states.load(job.jobId);
-            if (!state) continue;
-            await this.packages.get(job.jobId); // restore durable terminal package cache when present
-            if (state.orchestrationState === OrchestrationState.TERMINAL || state.packagePublished) continue;
+            if (!state) return;
+            // Durable packages are restored lazily by ReviewPackageProvider. Terminal jobs
+            // need no startup work and must not make listening depend on cache warm-up.
+            if (state.orchestrationState === OrchestrationState.TERMINAL || state.packagePublished) return;
             if (state.lastExecutionStatus === ExecutionStatus.RUNNING || state.lastExecutionStatus === ExecutionStatus.STARTING || state.orchestrationState === OrchestrationState.EXECUTING || state.orchestrationState === OrchestrationState.REVIEWING || state.orchestrationState === OrchestrationState.REPAIRING) {
                 await this.jobs.setExecutionMetadata(job.jobId, { executionId: job.executionId, executionStatus: ExecutionStatus.FAILED, startedAt: job.startedAt, finishedAt: new Date().toISOString(), exitCode: null });
                 await this.states.save({ ...state, orchestrationState: OrchestrationState.TERMINAL, recoveryStatus: RecoveryStatus.INTERRUPTED, packagePublished: false, updatedAt: new Date().toISOString() });
             }
-        }
+        }));
     }
 }

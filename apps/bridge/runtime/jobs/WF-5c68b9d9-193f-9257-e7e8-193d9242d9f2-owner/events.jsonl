@@ -1,0 +1,2 @@
+{"eventId":"dce8d18f-38d7-4084-8c53-aa816d8d52f9","jobId":"WF-5c68b9d9-193f-9257-e7e8-193d9242d9f2-owner","sequence":1,"type":"JOB_CREATED","from":null,"to":"DRAFT","timestamp":"2026-08-14T06:46:10.737Z","reason":"Job created"}
+{"eventId":"ba6d43aa-aa2a-4547-bf72-d5c4f22c9924","jobId":"WF-5c68b9d9-193f-9257-e7e8-193d9242d9f2-owner","sequence":2,"type":"JOB_PROJECT_BOUND","from":"DRAFT","to":"DRAFT","timestamp":"2026-08-14T06:46:10.796Z","reason":"Project binding snapshot created","metadata":{"projectId":"revit-addin-solution"}}

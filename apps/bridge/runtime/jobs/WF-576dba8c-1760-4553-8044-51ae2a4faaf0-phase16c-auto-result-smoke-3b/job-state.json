@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "WF-576dba8c-1760-4553-8044-51ae2a4faaf0-phase16c-auto-result-smoke-3b",
+  "planId": "WF-576dba8c-1760-4553-8044-51ae2a4faaf0",
+  "projectId": "revit-addin-solution",
+  "state": "COMPLETED",
+  "fixRound": 0,
+  "maxFixRounds": 2,
+  "createdAt": "2026-08-12T10:24:08.909Z",
+  "updatedAt": "2026-08-12T10:24:29.118Z",
+  "lastEventSequence": 28,
+  "metadata": {
+    "workflowId": "WF-576dba8c-1760-4553-8044-51ae2a4faaf0",
+    "workflowGoal": "Verify the Phase 16C duplicate-delivery fix with a fresh automatic result-return smoke workflow.",
+    "workflowTaskId": "phase16c-auto-result-smoke-3b",
+    "workflowInstruction": "Create phase16c-auto-result-smoke-3b.txt at the workflow-owned worktree repository root with the exact text: PHASE 16C DUPLICATE DELIVERY FIX PASS 3B. Do not modify any existing files. Do not commit, push, or tag.",
+    "workflowRequiredCommandIds": [],
+    "workflowExpectedArtifacts": [
+      "phase16c-auto-result-smoke-3b.txt"
+    ]
+  },
+  "projectBinding": {
+    "schemaVersion": 1,
+    "projectId": "revit-addin-solution",
+    "displayName": "RevitAddinSolution",
+    "repositoryPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+    "defaultBranch": "main",
+    "commands": [
+      {
+        "id": "codex-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node.exe",
+        "args": [
+          "C:\\Users\\Admin\\AppData\\Local\\hermes\\node\\node_modules\\@openai\\codex\\bin\\codex.js",
+          "exec",
+          "-"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "CODEX"
+        ]
+      },
+      {
+        "id": "antigravity-agent",
+        "executable": "C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe",
+        "args": [
+          "--mode",
+          "accept-edits",
+          "--model",
+          "gemini-3.6-flash-high",
+          "--dangerously-skip-permissions",
+          "--output-format",
+          "text",
+          "--print-timeout",
+          "120s"
+        ],
+        "timeoutSeconds": 1800,
+        "agentTypes": [
+          "ANTIGRAVITY"
+        ],
+        "promptTransport": "AGY_PRINT"
+      },
+      {
+        "id": "build",
+        "executable": "dotnet.exe",
+        "args": [
+          "build",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "build"
+      },
+      {
+        "id": "tests",
+        "executable": "dotnet.exe",
+        "args": [
+          "test",
+          "Antigravity.sln"
+        ],
+        "timeoutSeconds": 1800,
+        "verificationCheck": "tests"
+      }
+    ],
+    "projectCreatedAt": "2026-08-12T10:24:07.868Z",
+    "projectUpdatedAt": "2026-08-12T10:24:07.868Z",
+    "boundAt": "2026-08-12T10:24:07.868Z",
+    "verification": {
+      "verifiedAt": "2026-08-12T10:24:07.867Z",
+      "configuredPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "canonicalPath": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "gitRoot": "E:\\Antigravity\\RevitAddinSolution-smoke",
+      "branch": "main",
+      "headCommit": "c463f4040a0fbe0ba0833ebafa4ce86e260b1703",
+      "clean": true,
+      "commandsValid": true
+    }
+  },
+  "agentType": "CODEX",
+  "worktreePath": "E:\\chatgpt-local-orchestrator\\apps\\bridge\\runtime\\worktrees\\WF-576dba8c-1760-4553-8044-51ae2a4faaf0-owner",
+  "branchName": "job/WF-576dba8c-1760-4553-8044-51ae2a4faaf0-owner",
+  "worktreeCreatedAt": "2026-08-12T10:24:08.759Z",
+  "executionId": "47dc4ffb-21f7-405e-a87c-06bb0b6535c4",
+  "executionStatus": "COMPLETED",
+  "startedAt": "2026-08-12T10:24:09.565Z",
+  "finishedAt": "2026-08-12T10:24:28.565Z",
+  "exitCode": 0
+}

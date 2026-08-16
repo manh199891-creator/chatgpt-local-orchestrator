@@ -6,6 +6,8 @@
     "build": "pnpm --recursive build",
     "test": "vitest run --workspace vitest.workspace.ts --maxWorkers=1 --minWorkers=1",
     "typecheck": "pnpm --recursive typecheck",
+    "test:phase16d1": "node scripts/phase-16/acceptance-support-test.mjs && node scripts/phase-16/phase-16d1-hardening-test.mjs && pnpm --filter @local-orchestrator/extension test:project-hydration",
+    "inspect:phase16d": "node scripts/phase-16/inspect-16d-acceptance.mjs",
     "dev:bridge": "pnpm --filter @local-orchestrator/bridge dev"
   },
   "devDependencies": {

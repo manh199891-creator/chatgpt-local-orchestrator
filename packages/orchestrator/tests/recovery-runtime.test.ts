@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -38,5 +38,14 @@ describe("RecoveryRuntime", () => {
         await new RecoveryRuntime(x.jobs, x.states, x.packages).reconcile();
         await expect(x.jobs.loadJob("job-1")).resolves.toMatchObject({ executionStatus: ExecutionStatus.RUNNING });
         await expect(x.states.load("job-1")).resolves.toBeUndefined();
+    });
+
+    it("skips terminal package cache warm-up during startup", async () => {
+        const x = await setup(OrchestrationState.TERMINAL);
+        await x.states.save({ recoveryStateVersion: 1, jobId: "job-1", agentType: AgentType.CODEX, orchestrationState: OrchestrationState.TERMINAL, packagePublished: true, updatedAt: new Date().toISOString() });
+        const get = vi.spyOn(x.packages, "get");
+        await new RecoveryRuntime(x.jobs, x.states, x.packages).reconcile();
+        expect(get).not.toHaveBeenCalled();
+        await expect(x.jobs.loadJob("job-1")).resolves.toMatchObject({ executionStatus: ExecutionStatus.RUNNING });
     });
 });

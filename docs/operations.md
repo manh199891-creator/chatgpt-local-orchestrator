@@ -17,8 +17,10 @@ owns restart-time reconciliation.
 
 ## Starting and stopping
 
-Start the Bridge with the repository's configured Bridge command and provide
-its bearer token through the documented local configuration mechanism. Do not
+From the repository root, start the Bridge with `pnpm.cmd dev:bridge`. This
+prepares the Bridge's required workspace dependency outputs before executing
+Bridge TypeScript source; a separate full workspace build is not required.
+Provide its bearer token through the documented local configuration mechanism. Do not
 put a token in source control, shell history, issue text, or a review package.
 
 At startup the Bridge initializes runtime storage and durable package access,
@@ -29,6 +31,44 @@ response therefore indicates an operational Bridge, not merely a live process.
 For normal shutdown, stop the Bridge through its host process. Bridge close
 waits for known in-process orchestration work to settle; it does not wait for
 or attempt to adopt processes that were owned by an earlier Bridge process.
+
+Bridge storage defaults to the package-anchored `apps/bridge/runtime` directory,
+regardless of the launcher's current directory. `BRIDGE_RUNTIME_ROOT` remains
+the explicit override. Startup checks port 43120: an already healthy Local
+Orchestrator Bridge is reused, while another owner produces a clear failure and
+is never killed. Bounded startup diagnostics are written beneath
+`apps/bridge/runtime/logs` without tokens or environment secrets.
+
+### Current-user Windows background startup
+
+Install the project-owned Scheduled Task from PowerShell without elevation:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\ops\windows\Install-BridgeScheduledTask.ps1
+```
+
+Installation prepares the Bridge and its workspace dependencies. The task then
+runs the compiled Bridge entry point with Node at current-user logon through a
+hidden PowerShell launcher. The launcher owns and waits for the Bridge process,
+propagates its exit code, and remains Running for the Bridge lifetime. It starts
+from the stable repository root, ignores duplicate task instances, reads the
+normal Bridge `.env.local`/runtime configuration, and writes bounded background
+logs under `apps/bridge/runtime/logs`. The token is not present in the Scheduled
+Task command line.
+
+The task is allowed to start on battery and is not stopped merely because the
+machine changes from AC to battery power. This localhost development service
+supervises durable browser workflows, so an ordinary laptop power-source change
+must not silently interrupt it. The task remains current-user, interactive-logon,
+and limited privilege; this power policy does not add elevation. Restart on
+failure is bounded to three attempts at one-minute intervals, and the task has no
+execution time limit.
+
+Remove it with:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\ops\windows\Uninstall-BridgeScheduledTask.ps1
+```
 
 ## Runtime data
 

@@ -622,6 +622,39 @@
         </div>
       </section>
 
+      <section class="card" id="workflow-inbox-section">
+        <h2 class="card-title">Incoming Workflow</h2>
+        <p class="text-muted">Paste an explicitly marked LOCAL_ORCHESTRATOR_WORKFLOW_V1 handoff. Manual review remains the default.</p>
+        <div class="field-vertical">
+          <label for="paste-to-run-enabled" class="label"><input id="paste-to-run-enabled" type="checkbox"> Paste valid WorkflowPlan and run automatically</label>
+          <span class="text-muted">Opt-in local setting. Only a real paste gesture can auto-submit; startup, restored text, and input/change events cannot.</span>
+        </div>
+        <div class="field-vertical">
+          <label for="chatgpt-capture-enabled" class="label"><input id="chatgpt-capture-enabled" type="checkbox"> Capture WorkflowPlan from ChatGPT automatically</label>
+          <span class="text-muted">Opt-in auto-import from completed ChatGPT assistant turns. Review Plan and Run Workflow remain explicit.</span>
+          <span id="chatgpt-capture-status" class="text-muted">ChatGPT capture is off.</span>
+          <button id="btn-load-chatgpt-capture" class="btn hidden" type="button" disabled>Load Captured Workflow</button>
+        </div>
+        <textarea id="workflow-handoff-input" rows="7" placeholder="LOCAL_ORCHESTRATOR_WORKFLOW_V1&#10;{...}"></textarea>
+        <div class="actions-row"><button id="btn-import-workflow" class="btn" type="button">Review Plan</button><button id="btn-run-workflow" class="btn btn-accent" type="button" disabled>Run Workflow</button><button id="btn-cancel-workflow" class="btn btn-danger" type="button" disabled>Cancel Workflow</button></div>
+        <pre id="workflow-preview" class="text-muted">No incoming workflow.</pre>
+        <div id="workflow-status" class="text-muted">Not submitted.</div>
+        <pre id="supervision-registration-status" class="text-muted">Supervision registration: Not requested</pre>
+      </section>
+      <section class="card" id="workflow-result-section">
+        <h2 class="card-title">Workflow Result</h2>
+        <div class="field-vertical">
+          <label for="auto-result-return-enabled" class="label"><input id="auto-result-return-enabled" type="checkbox"> Return workflow results to ChatGPT automatically</label>
+          <span id="auto-result-return-status" class="text-muted">Automatic ChatGPT return: Disabled</span>
+          <label for="browser-supervisor-enabled" class="label"><input id="browser-supervisor-enabled" type="checkbox"> Browser Supervisor</label>
+          <label for="browser-supervisor-simulated-outage" class="label"><input id="browser-supervisor-simulated-outage" type="checkbox"> Manual acceptance diagnostic: Simulate Bridge Outage</label>
+          <span id="browser-supervisor-simulated-outage-status" class="text-muted">Simulated Bridge outage: OFF</span>
+          <pre id="browser-supervisor-status" class="text-muted">Supervisor: OFF</pre>
+        </div>
+        <div id="workflow-result-summary" class="text-muted">No terminal workflow result loaded.</div>
+        <div class="actions-row"><button id="btn-prepare-workflow-result" class="btn btn-primary" type="button" disabled>Prepare for ChatGPT Review</button></div>
+      </section>
+
       <!-- Message / Status Box -->
       <section id="message-box" class="message-box hidden">
         <p id="message-text"></p>
